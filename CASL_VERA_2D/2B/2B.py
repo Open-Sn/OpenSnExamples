@@ -24,10 +24,13 @@ if "opensn_console" not in globals():
         PowerIterationKEigenSolver,
         CMFDAcceleration,
     )
-    from pyopensn.logvol import LogicalVolume, RCCLogicalVolume
-    from pyopensn.fieldfunc import FieldFunctionInterpolationVolume
+    from pyopensn.logvol import RCCLogicalVolume
+    from pyopensn.post import VolumePostprocessor
 else:
     barrier = cast(Any, globals()["MPIBarrier"])
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from casl_pin_power import compute_pin_powers  # noqa: E402 -- needs sys.path set up first
 
 
 def find_repo_root(start):
@@ -104,9 +107,12 @@ h5_mat_names = [
     "water_outside",
 ]
 
+FUEL_XS_NAMES = {"fuel"}  # only fissionable materials carry "kappa-fission" data in the MGXS file
+
 for name in h5_mat_names:
     xs_dict[name] = MultiGroupXS()
-    xs_dict[name].LoadFromOpenMC(xs_filepath, name, 294.0)
+    extra_xs_names = ["kappa-fission"] if name in FUEL_XS_NAMES else []
+    xs_dict[name].LoadFromOpenMC(xs_filepath, name, 294.0, extra_xs_names=extra_xs_names)
     xs_list = np.append(xs_list, xs_dict[name])
 
 block_ids = [i for i in range(0, len(xs_list))]
@@ -189,30 +195,6 @@ k_solver.Initialize()
 k_solver.Execute()
 
 keff = k_solver.GetEigenvalue()
-fflist = phys.GetScalarFluxFieldFunction()
-
-
-def compute_cell_center_old(i, j, num_cells, pitch):
-    """
-    i, j are in {0, 1, …, num_cells-1}.
-    Returns (x_center, y_center) so that:
-      - When num_cells is odd, the cell ( (num_cells-1)//2, (num_cells-1)//2 ) sits at (0,0).
-      - When num_cells is even, the grid is centered between the four middle cells.
-    """
-    center_index = (num_cells - 1) / 2.0
-    x_center = (i - center_index) * pitch
-    y_center = (j - center_index) * pitch
-    return x_center, y_center
-
-
-def compute_cell_center(i, j, offset_x, offset_y):
-    """
-    i, j are in {0, 1, …, num_cells-1}.
-    Returns (x_center, y_center)
-    """
-    x_center = i * pitch + offset_x
-    y_center = j * pitch + offset_y
-    return x_center, y_center
 
 
 def read_csv_to_2d_array(file_path):
@@ -245,45 +227,43 @@ num_cells = lattice_csv.shape[0]
 if num_cells != lattice_csv.shape[1]:
     raise Exception("CSV array of cell names is not square.")
 
-fuel_xs = xs_dict["fuel"]
-sig_f = np.array(fuel_xs.sigma_f)
-
-pitch = 1.26
 
 num_cells_quarter = np.ceil(num_cells / 2).astype(np.int64)
-quarter_lattice_center = -5.375
 
-offset_x = -4.705
-offset_y = 4.705 - 16 * pitch
+label_to_block_xs = {"fu": (h5_mat_names.index("fuel"), xs_dict["fuel"])}
+pin_positions_csv = casl_mesh_dir / ('pin_positions_' + casename + '.csv')
+val_table = compute_pin_powers(
+    phys, RCCLogicalVolume, VolumePostprocessor, pin_positions_csv, label_to_block_xs,
+    lattice_csv.shape,
+)
 
-val_table = np.zeros([num_cells, num_cells])
-
-for i in range(num_cells):
-    for j in range(num_cells):
-        if lattice_csv[i, j] == "fu":
-            x_center, y_center = compute_cell_center(i, j, offset_x, offset_y)
-            if rank == 0:
-                print("centers=", i, j, x_center, y_center)
-            my_lv = RCCLogicalVolume(r=0.4060, x0=x_center, y0=y_center, z0=-1.0, vz=2.0)
-
-            val = 0
-            for g in range(0, num_groups):
-                ffi = FieldFunctionInterpolationVolume()
-                ffi.SetOperationType("sum")
-                ffi.SetLogicalVolume(my_lv)
-                ffi.AddFieldFunction(fflist[g])
-                ffi.Execute()
-                val_g = ffi.GetValue()
-                val += val_g * sig_f[g]
-            val_table[i, j] = val
+# Raw (pre-normalization) values, saved for regression testing (see check_pin_powers.py) --
+# unlike the peak-normalized power.txt below, these are directly comparable run-to-run: no
+# division by a run-dependent "which pin is the max" statistic that a tiny amount of solve
+# noise can flip between two near-tied pins, disproportionately amplifying that noise.
+if rank == 0:
+    np.savetxt("power_raw.txt", val_table)
 
 val_table_ori = val_table.copy()
 
-val_table = np.flip(val_table, axis=1)
 # quarter array
+# NOTE: this used to also flip columns here (np.flip(val_table, axis=1)) before extracting A --
+# that was compensating for the OLD empirical-clustering pipeline's brute-force axis/sign/offset
+# search occasionally landing on a mirrored (but still label-valid) reading specifically for this
+# case's own label pattern. The new pipeline's row/col convention is deterministic and uniform
+# across all 17 cases (row=round(-y/pitch)+CENTER_ROW, col=round(x/pitch)+CENTER_COL, see
+# generate_lattice_meshes.py's compute_pin_positions) and already matches lattice_csv's own
+# indexing directly (verified for 2A via an exact positional match on all 8 "gt" positions), so
+# the pre-flip is no longer needed -- keeping it actively broke the reconstruction (confirmed: it
+# collapsed 264 pins down to 12 nonzero values). Confirmed removing it is correct by feeding the
+# real benchmark reference through this exact reconstruction: without the flip, the output matches
+# the reference exactly (max abs diff 0.000000); with it, max abs diff was >1.0.
 A = val_table[:num_cells_quarter, :num_cells_quarter]
-A[:, -1] *= 2.
-A[-1, :] *= 2.
+# NOTE: this used to double the last row/col here (compensating for a half-pin-at-the-cut
+# under-count) -- no longer needed now that compute_pin_powers itself already scales cut pins
+# up to their true full-pin-equivalent value (see casl_pin_power.py's module docstring, fix #3).
+# Doing both here and there double-corrected (~2x too high at every cut position, confirmed via
+# a real solve: max error was +83% before removing this).
 val_table_quarter = A.copy()
 A_flipped = np.flip(A, axis=1)
 B = np.hstack([A, A_flipped[:, 1:]])

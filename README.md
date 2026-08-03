@@ -13,5 +13,5 @@ A short description of each example is given below:
     3D criticality benchmark problem
 - [Six 1-g Spherical Benchmarks](./Six_1g_spherical_benchmarks/README.md):  
     Six 3D spherical benchmark problems
-- [CASL VERA Problem 2 Benchmarks](./CASL_VERA_2D/README.md):
+- [CASL VERA Problem 2 Benchmarks](./CASL_VERA_2D/README.md):  
     Two-dimensional fuel-lattice k-eigenvalue benchmark problems

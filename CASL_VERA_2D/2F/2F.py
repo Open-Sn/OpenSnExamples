@@ -22,8 +22,11 @@ if "opensn_console" not in globals():
         PowerIterationKEigenSolver,
         CMFDAcceleration,
     )
-    from pyopensn.logvol import LogicalVolume, RCCLogicalVolume
-    from pyopensn.fieldfunc import FieldFunctionInterpolationVolume
+    from pyopensn.logvol import RCCLogicalVolume
+    from pyopensn.post import VolumePostprocessor
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from casl_pin_power import compute_pin_powers  # noqa: E402 -- needs sys.path set up first
 
 
 def find_repo_root(start):
@@ -79,7 +82,7 @@ meshgen = FromFileMeshGenerator(
 
 grid = meshgen.Execute()
 grid.SetOrthogonalBoundaries()
-grid.ExportToPVTU('mesh_2A')
+grid.ExportToPVTU('mesh' + casename)
 
 xs_filename = 'mgxs_' + h5_name + '_one_eighth_SHEM-361.h5'
 xs_filepath = str(casl_xs_dir / ('mgxs_casl_' + h5_name) / xs_filename)
@@ -100,9 +103,12 @@ h5_mat_names = ['fuel',
                 'pyrex_water',
                 'water_outside']
 
+FUEL_XS_NAMES = {"fuel"}  # only fissionable materials carry "kappa-fission" data in the MGXS file
+
 for name in h5_mat_names:
     xs_dict[name] = MultiGroupXS()
-    xs_dict[name].LoadFromOpenMC(xs_filepath, name, 294.0)
+    extra_xs_names = ["kappa-fission"] if name in FUEL_XS_NAMES else []
+    xs_dict[name].LoadFromOpenMC(xs_filepath, name, 294.0, extra_xs_names=extra_xs_names)
     xs_list = np.append(xs_list, xs_dict[name])
 
 block_ids = [i for i in range(0, len(xs_list))]
@@ -182,18 +188,8 @@ k_solver.Initialize()
 k_solver.Execute()
 
 keff = k_solver.GetEigenvalue()
-fflist = phys.GetScalarFluxFieldFunction()
 
-pitch = 1.26
 num_cells = 17
-half_water_gap = 0.04
-
-
-def compute_cell_center(i, j):
-    x_center = (i - 1) * pitch - (num_cells / 2) * pitch
-    y_center = (j - 1) * pitch - (num_cells / 2) * pitch
-    return x_center, y_center
-
 
 your_files = os.getcwd()
 
@@ -228,34 +224,26 @@ if lattice_csv.shape[0] != lattice_csv.shape[1]:
 
 csv_size = lattice_csv.shape[0]
 
-val_table = np.zeros([num_cells, num_cells])
+label_to_block_xs = {"fu": (h5_mat_names.index("fuel"), xs_dict["fuel"])}
+pin_positions_csv = casl_mesh_dir / ('pin_positions_' + casename + '.csv')
+val_table = compute_pin_powers(
+    phys, RCCLogicalVolume, VolumePostprocessor, pin_positions_csv, label_to_block_xs,
+    lattice_csv.shape,
+)
 
-fuel_xs = xs_dict["fuel"]
-sig_f = np.array(fuel_xs.sigma_f)
-
-
-for i in range(1, num_cells + 1):
-    for j in range(1, num_cells + 1):
-        if lattice_csv[i - 1, j - 1] == 'fu':
-            x_center, y_center = compute_cell_center(i, j)
-            my_lv = RCCLogicalVolume(r=0.4060, x0=x_center, y0=y_center, z0=-1.0, vz=2.0)
-
-            val = 0
-            for g in range(0, num_groups):
-                ffi = FieldFunctionInterpolationVolume()
-                ffi.SetOperationType('sum')
-                ffi.SetLogicalVolume(my_lv)
-                ffi.AddFieldFunction(fflist[g])
-                ffi.Execute()
-                val_g = ffi.GetValue()
-                val += val_g * sig_f[g]
-            val_table[i - 1][j - 1] = val
+# Raw (pre-normalization) values, saved for regression testing (see check_pin_powers.py) --
+# unlike the peak-normalized power.txt below, these are directly comparable run-to-run: no
+# division by a run-dependent "which pin is the max" statistic that a tiny amount of solve
+# noise can flip between two near-tied pins, disproportionately amplifying that noise.
+if rank == 0:
+    np.savetxt("power_raw.txt", val_table)
 
 maxes = np.zeros([num_cells])
 for i in range(0, num_cells):
     maxes[i] = max(val_table[:, i])
 val_max = max(maxes)
 
-np.savetxt("power.txt", val_table / val_max)
-with open("keff.txt", "w") as file:
-    file.write(str(keff))
+if rank == 0:
+    np.savetxt("power.txt", val_table / val_max)
+    with open("keff.txt", "w") as file:
+        file.write(str(keff))

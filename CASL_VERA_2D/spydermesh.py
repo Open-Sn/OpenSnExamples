@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 The OpenSn Authors <https://open-sn.github.io/opensn/>
+# SPDX-License-Identifier: MIT
+
 """Generate spyderweb meshes for CASL VERA 2D pin-cell examples."""
 
 import itertools
