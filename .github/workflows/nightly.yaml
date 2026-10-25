@@ -30,6 +30,8 @@ jobs:
           cd opensn && mkdir build && cd build && cmake -DOPENSN_WITH_PYTHON=True .. && make -j
       - name: test examples
         shell: bash
+        env:
+          CASL_CASES: 2A,2B,2D,2F,2G,2H,2K,2N,2P,2Q
         run: |
           module load opensn/clang/17 python3/3.12.3
           export OPENSN=$PWD/opensn/build/python/opensn

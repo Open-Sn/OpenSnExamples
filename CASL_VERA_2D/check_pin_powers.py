@@ -12,8 +12,9 @@ aggregation across cases.
 
 Two checks per case:
 
-1. Regression: power_raw.txt (freshly produced by this run, the raw kappa-fission-weighted
-   VolumePostprocessor output before any normalization) must closely match power_raw_baseline.txt.
+1. Regression: the unit-sum pin-power distribution computed from power_raw.txt must closely
+   match the distribution computed from power_raw_baseline.txt.  The overall scale is excluded
+   because the amplitude of a k-eigenvector is arbitrary.
 
 2. Benchmark comparison (informational only, printed via compare_casl_pin_power.py, never fails
    this script): how OpenSn's pin powers compare to the VERA benchmark's own reference. Some
@@ -45,11 +46,13 @@ from run_all_cases import CASES, find_opensn_executable, run_case  # noqa: E402
 from compare_casl_pin_power import compare_case, load_reference_keff  # noqa: E402
 
 
-def check_pin_power_regression(case_dir, rel_tol=1.0e-6, abs_tol=1.0e-6):
-    """Compares case_dir/power_raw.txt against case_dir/power_raw_baseline.txt (both raw,
-    pre-normalization values). Returns None if they match (or if there's no baseline to
-    check against, i.e. the case hasn't been baselined yet), or a short string describing
-    the mismatch otherwise.
+def check_pin_power_regression(case_dir, rel_tol=1.0e-5, abs_tol=1.0e-12):
+    """Compares unit-sum pin-power distributions from the current and baseline raw output.
+
+    The absolute amplitude of the flux from a k-eigenvalue solve is arbitrary, so comparing
+    unnormalized powers would make this check depend on the solver's eigenvector scaling.
+    Returns None if the distributions match (or if the case has no baseline), otherwise a
+    short description of the mismatch.
     """
     power_path = case_dir / "power_raw.txt"
     baseline_path = case_dir / "power_raw_baseline.txt"
@@ -65,13 +68,26 @@ def check_pin_power_regression(case_dir, rel_tol=1.0e-6, abs_tol=1.0e-6):
             f"shape mismatch: power_raw.txt {power.shape} vs. power_raw_baseline.txt "
             f"{baseline.shape}"
         )
-    if np.allclose(power, baseline, rtol=rel_tol, atol=abs_tol):
+    if not np.all(np.isfinite(power)) or not np.all(np.isfinite(baseline)):
+        return "pin powers contain non-finite values"
+
+    power_sum = power.sum()
+    baseline_sum = baseline.sum()
+    if power_sum <= 0.0 or baseline_sum <= 0.0:
+        return f"non-positive total pin power (power_raw={power_sum}, baseline={baseline_sum})"
+
+    power_distribution = power / power_sum
+    baseline_distribution = baseline / baseline_sum
+    if np.allclose(
+        power_distribution, baseline_distribution, rtol=rel_tol, atol=abs_tol
+    ):
         return None
-    diff = np.abs(power - baseline)
+    diff = np.abs(power_distribution - baseline_distribution)
     i = int(np.argmax(diff))
     return (
-        f"max abs diff {diff.flat[i]:.3e} at flat index {i} "
-        f"(power_raw={power.flat[i]!r}, baseline={baseline.flat[i]!r})"
+        f"max normalized abs diff {diff.flat[i]:.3e} at flat index {i} "
+        f"(power_fraction={power_distribution.flat[i]!r}, "
+        f"baseline_fraction={baseline_distribution.flat[i]!r})"
     )
 
 

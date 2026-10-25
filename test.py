@@ -89,10 +89,21 @@ def load_casl_2d_test_cases():
 
     check_script = os.path.join(EXAMPLES_ROOT, "CASL_VERA_2D", "check_pin_powers.py")
 
+    selected_cases_text = os.environ.get("CASL_CASES")
+    selected_cases = None
+    if selected_cases_text:
+        selected_cases = {
+            case.strip() for case in selected_cases_text.split(",") if case.strip()
+        }
+
     cases = []
+    available_cases = set()
     with open(reference_file, newline="", encoding="utf-8") as csv_file:
         for row in csv.DictReader(csv_file):
             case = row["case"]
+            available_cases.add(case)
+            if selected_cases is not None and case not in selected_cases:
+                continue
             extra_check_cmd = (
                 [sys.executable, check_script, case, "--skip-run"]
                 if os.path.isfile(check_script) else None
@@ -101,11 +112,16 @@ def load_casl_2d_test_cases():
                 (
                     os.path.join("CASL_VERA_2D", case, f"{case}.py"),
                     {"PI": "final", "k_eff": float(row["k"])},
-                    64,
+                    48,
                     1.0e-6,
                     extra_check_cmd,
                 )
             )
+    if selected_cases is not None:
+        unknown_cases = selected_cases - available_cases
+        if unknown_cases:
+            raise ValueError(f"Unknown CASL_CASES: {', '.join(sorted(unknown_cases))}")
+
     return cases
 
 

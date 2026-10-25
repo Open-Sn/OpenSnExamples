@@ -169,12 +169,12 @@ phys = DiscreteOrdinatesProblem(
 
 cmfd = CMFDAcceleration(
     problem=phys,
-    current_closure="auto",
+    current_closure="partial",
     relaxation=1.0,
     coarse_mesh="local_aggregation",
     coarse_solver_policy="direct",
     aggregation_size=64,
-    group_aggregation_size=(num_groups + 63) // 64,
+    group_aggregation_size=(num_groups + 31) // 32,
     update_wgs_max_its=1,
     update_wgs_abs_tol=1.0e-12,
     balance_residual_tolerance=1.0e-5,

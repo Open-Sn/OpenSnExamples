@@ -176,7 +176,7 @@ phys = DiscreteOrdinatesProblem(
 
 cmfd = CMFDAcceleration(
     problem=phys,
-    current_closure="auto",
+    current_closure="partial",
     relaxation=1.0,
     coarse_mesh="local_aggregation",
     coarse_solver_policy="direct",

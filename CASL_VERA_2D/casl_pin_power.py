@@ -4,8 +4,9 @@
 """Shared pin-power postprocessing for the VERA Problem 2 lattice cases (2A-2Q).
 
 lbs::VolumePostprocessor batches every fuel pin of a given material into one call (one
-RCCLogicalVolume per pin, block_ids restricted to that material, xs_multiplier="kappa-fission"
-for a physically-weighted fission-power integral, summed over groups) instead of one
+RCCLogicalVolume per pin, block_ids restricted to that material, and the material's
+``kappa-fission`` vector supplied as group multipliers for a physically weighted fission-power
+integral, summed over groups) instead of one
 FieldFunctionInterpolationVolume call per pin per group -- e.g. 264 fuel pins * 361 groups = ~95k
 individual calls for a Problem 2 lattice, we use 1-2 VolumePostprocessor calls total.
 
@@ -88,7 +89,7 @@ def compute_pin_powers(
     positions_by_label = load_pin_positions(pin_positions_csv)
 
     val_table = np.zeros(lattice_shape)
-    for label, (block_id, _xs_obj) in label_to_block_xs.items():
+    for label, (block_id, xs_obj) in label_to_block_xs.items():
         entries = positions_by_label.get(label, [])
         if not entries:
             continue
@@ -102,7 +103,7 @@ def compute_pin_powers(
             value_type="integral",
             block_ids=[block_id],
             logical_volumes=logical_volumes,
-            xs_multiplier="kappa-fission",
+            group_multipliers=xs_obj.get_custom_xs("kappa-fission").tolist(),
         )
         pps.Execute()
         multipliers = np.array([multiplier for *_rest, multiplier in entries])

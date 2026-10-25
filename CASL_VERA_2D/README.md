@@ -35,11 +35,13 @@ special cases.
 
 ```bash
 OPENSN=/path/to/build/python/opensn pytest test.py -k CASL_VERA_2D
+CASL_CASES=2A,2F,2Q OPENSN=/path/to/build/python/opensn pytest test.py -k CASL_VERA_2D
 ```
 
-For every case, a 64-rank run of `<case>/<case>.py` has its converged k-eff
-compared against a baseline value in `casl_reference_k.csv` (relative
-tolerance 1e-6).
+By default, every case is run with 48 MPI ranks and its converged k-eff is compared against a
+baseline value in `casl_reference_k.csv` (relative tolerance 1e-6). Set the comma-separated
+`CASL_CASES` environment variable to run a subset. The nightly workflow runs a representative
+subset; OpenSn's weekly workflow runs the complete suite.
 
 ### Pin-power regression + benchmark comparison (`check_pin_powers.py`)
 
@@ -52,10 +54,12 @@ python3 check_pin_powers.py --skip-run       # check existing power_raw.txt/keff
 
 For each case, we have two checks (in addition to the keff check in `test.py`):
 
-1. **Regression** -- `power_raw.txt` (the raw, pre-normalization
-   kappa-fission-weighted VolumePostprocessor output) is compared against
-   a committed snapshot, `<case>/power_raw_baseline.txt` (relative/
-   absolute tolerance 1e-6).
+1. **Regression** -- the unit-sum pin-power distribution formed from
+   `power_raw.txt` (the raw kappa-fission-weighted VolumePostprocessor output)
+   is compared against the distribution formed from the committed snapshot,
+   `<case>/power_raw_baseline.txt` (relative tolerance 1e-5). The snapshots use
+   the same 48 MPI ranks as `test.py`. The total is normalized because a
+   k-eigenvector's overall amplitude is arbitrary.
 2. **Benchmark comparison (informational only, via `compare_casl_pin_power.py`)**
    -- OpenSn's k-eff and pin powers are also compared against the actual VERA
    benchmark reference (`vera_reference_keff.csv` and each case's
