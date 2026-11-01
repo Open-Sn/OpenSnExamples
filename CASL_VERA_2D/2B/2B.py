@@ -190,7 +190,7 @@ cmfd = CMFDAcceleration(
     balance_residual_tolerance=1.0e-5,
 )
 
-k_solver = PowerIterationKEigenSolver(problem=phys, acceleration=cmfd, k_tol=1.0e-6)
+k_solver = PowerIterationKEigenSolver(problem=phys, acceleration=cmfd, k_tol=1.0e-7)
 k_solver.Initialize()
 k_solver.Execute()
 
