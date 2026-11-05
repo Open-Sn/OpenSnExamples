@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+meshCase/
+waterblock_energy_deposition*.vtu
+waterblock_energy_deposition*.pvtu
+*.log
+precice-config.runtime.xml
+precice-run/
+precice-profiling/
+

@@ -1,0 +1,23 @@
+FoamFile
+{
+    version 2.0;
+    format ascii;
+    class dictionary;
+    object controlDict;
+}
+application multiRegionPrecicePowerTest;
+// decomposePar -allRegions decomposes the regions listed here.
+regionSolvers
+{
+    regionA solid;
+    regionB solid;
+    regionC solid;
+}
+startFrom startTime;
+startTime 0;
+stopAt endTime;
+endTime 1;
+deltaT 1;
+writeControl timeStep;
+writeInterval 1;
+runTimeModifiable false;

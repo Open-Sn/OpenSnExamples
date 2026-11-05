@@ -1,0 +1,11 @@
+transportPowerCoupling
+{
+    type multiRegionPrecicePower;
+    libs ("libmultiRegionPrecicePower.so");
+    regions (tungsten copper aluminum air steel water);
+    configurationFile "../precice-config.runtime.xml";
+    participant OpenFOAM;
+    mesh OpenFOAM-Cells;
+    data TransportCellPower;
+    field Qtransport;
+}
