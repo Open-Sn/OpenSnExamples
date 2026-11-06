@@ -44,3 +44,11 @@ CASL_VERA_2D/*/keff.txt
 CASL_VERA_2D/*/mesh_*.vtu
 CASL_VERA_2D/*/mesh_*.pvtu
 CASL_VERA_2D/*/*.restart.h5
+
+# Time-dependent Kobayashi -- per-run outputs of kobayashi_td.py, compare_openmc.py, and
+# render_animation.py
+Kobayashi_Time_Dependent/kobayashi_td_results.csv
+Kobayashi_Time_Dependent/kobayashi_td_summary.csv
+Kobayashi_Time_Dependent/kobayashi_td_comparison.png
+Kobayashi_Time_Dependent/kobayashi_td_vtk/
+Kobayashi_Time_Dependent/kobayashi_td_png/

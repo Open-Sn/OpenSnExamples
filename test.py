@@ -32,6 +32,19 @@ TEST_CASES = [
         None,
     ),
     (
+        os.path.join("Kobayashi_Time_Dependent", "kobayashi_td.py"),
+        {"time-integral-identity-max-rel-error:": 0.0},
+        8,
+        1.0e-4,
+        [
+            sys.executable,
+            os.path.join(EXAMPLES_ROOT, "Kobayashi_Time_Dependent", "compare_openmc.py"),
+            "--check",
+            os.path.join(EXAMPLES_ROOT, "Kobayashi_Time_Dependent", "kobayashi_td_results.csv"),
+            os.path.join(EXAMPLES_ROOT, "Kobayashi_Time_Dependent", "openmc_reference.csv"),
+        ],
+    ),
+    (
         os.path.join("Six_1g_spherical_benchmarks", "Problem_1.py"),
         {"end-radius:": 1.00, "avg-value:": 8.212354},
         12,

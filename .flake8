@@ -8,3 +8,4 @@ extend-exclude = build*
 per-file-ignores =
     test/python/*.py: F401, F821
     CASL_VERA_2D/2?/*.py: F403, F405
+    Kobayashi_Time_Dependent/render_animation.py: F821

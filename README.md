@@ -11,6 +11,8 @@ A short description of each example is given below:
     3D fixed-source problem that models a source in an urban setting
 - [HEU_MET_FAST_003](./HEU_MET_FAST_003/README.md):  
     3D criticality benchmark problem
+- [Time-Dependent Kobayashi Dog-Leg](./Kobayashi_Time_Dependent/README.md):  
+    3D time-dependent fixed-source benchmark with a void duct, compared with Monte Carlo
 - [Six 1-g Spherical Benchmarks](./Six_1g_spherical_benchmarks/README.md):  
     Six 3D spherical benchmark problems
 - [CASL VERA Problem 2 Benchmarks](./CASL_VERA_2D/README.md):
