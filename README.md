@@ -15,3 +15,6 @@ A short description of each example is given below:
     Six 3D spherical benchmark problems
 - [CASL VERA Problem 2 Benchmarks](./CASL_VERA_2D/README.md):
     Two-dimensional fuel-lattice k-eigenvalue benchmark problems
+- [WATERBLOCK OpenSn/OpenFOAM Coupling](./OpenFOAM_Electron_Converter/README.md):
+    Forty-group electron-photon CSDA transport coupled conservatively to a
+    six-region OpenFOAM conjugate-heat-transfer calculation through preCICE

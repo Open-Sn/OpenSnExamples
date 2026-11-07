@@ -1,0 +1,8 @@
+EXE_INC = \
+    -std=c++17 \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    $(shell pkg-config --cflags libprecice)
+
+LIB_LIBS = \
+    -lfiniteVolume \
+    $(shell pkg-config --libs libprecice)

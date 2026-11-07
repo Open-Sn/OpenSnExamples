@@ -1,0 +1,3 @@
+multiRegionPrecicePower.C
+
+LIB = $(FOAM_USER_LIBBIN)/libmultiRegionPrecicePower

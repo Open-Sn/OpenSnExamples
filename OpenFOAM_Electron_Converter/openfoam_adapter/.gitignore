@@ -1,0 +1,9 @@
+lib/
+lnInclude/
+Make/linux*/
+tests/bin/
+tests/Make/linux*/
+tests/case/constant/*
+!tests/case/constant/regionProperties
+tests/case/processor*/
+tests/*.log
