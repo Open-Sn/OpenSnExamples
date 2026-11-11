@@ -20,3 +20,5 @@ A short description of each example is given below:
 - [WATERBLOCK OpenSn/OpenFOAM Coupling](./OpenFOAM_Electron_Converter/README.md):
     Forty-group electron-photon CSDA transport coupled conservatively to a
     six-region OpenFOAM conjugate-heat-transfer calculation through preCICE
+- [Tokamak Fusion Engineering](./Tokamak_Fusion_Engineering/README.md):
+    3D 64-group fusion shielding problem compared with continuous-energy OpenMC.
