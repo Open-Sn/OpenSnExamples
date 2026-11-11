@@ -1,0 +1,5 @@
+__pycache__/
+tokamak.msh
+tokamak_flux*.pvtu
+tokamak_flux*.vtu
+openmc_seed*/
