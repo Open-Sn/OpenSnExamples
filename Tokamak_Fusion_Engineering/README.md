@@ -107,8 +107,59 @@ the other regions differ from the analytic volumes by 0.01% to 0.48%.
 
 The 64-group library `materials_64g_p3.h5` was generated for this problem with OpenMC from
 ENDF/B-VIII.0 continuous-energy data by [generate_xs.py](generate_xs.py). The groups span
-0 to 14.191 MeV. They are a subset of the VITAMIN-J 175-group boundaries with four thermal
-boundaries added below 0.1 eV. Group 0, from 13.84 to 14.191 MeV, contains the source.
+0 to 14.191 MeV, and group 0, from 13.84 to 14.191 MeV, contains the source. The group
+boundaries come from VITAMIN-J, as described below.
+
+### Energy groups
+
+OpenMC tallies every cross section directly in the 64 groups as a reaction rate divided by
+the scalar flux of the group, both from the continuous-energy calculation. Each group cross
+section is therefore the continuous-energy data averaged over the group with the problem's
+own flux as the weight. Only the group boundaries are taken from VITAMIN-J.
+
+The 64 groups were chosen from the VITAMIN-J 175-group boundaries in four steps.
+
+1. Keep the 168 groups up to 14.191 MeV. The source is monoenergetic at 14.1 MeV, so the
+   seven groups from 14.191 to 19.64 MeV receive no neutrons.
+2. Split the lowest VITAMIN-J group, 10⁻⁵ to 0.1 eV, into five groups with boundaries at
+   0, 0.005, 0.01, 0.0253, and 0.05 eV. The lowest group extends to zero energy. This fine
+   grid has 172 groups.
+3. Keep 17 boundaries of the fine grid: 0, 0.005, 0.01, 0.0253, 0.05, 0.1, 0.53158, and
+   1.1253 eV, 961.12 eV, 9.1188 keV, the boundaries at 23.579, 24.176, and 24.788 keV that
+   bracket the deep minimum of the iron cross section near 24 keV, 1.0026 MeV, 10 MeV,
+   13.84 MeV (the lower edge of the source group), and 14.191 MeV.
+4. Add the remaining 48 boundaries one at a time. Each one splits the group that spans the
+   most fine groups at its middle fine boundary (the higher-energy group when two groups
+   span equally many).
+
+The boundaries near 1 eV, 1 keV, 1 MeV, and 10 MeV place group edges at round energies, so
+that flux bands such as the flux above 1 MeV are sums of whole groups. The boundary at
+9.1188 keV lies just below 10 keV, where the resolved resonance range of tungsten ends.
+
+The result has 5 groups below 0.1 eV, 11 from 0.1 eV to 1 keV, 12 from 1 to 100 keV, 15
+from 100 keV to 1 MeV, 16 from 1 to 10 MeV, and 5 from 10 to 14.191 MeV. Above 100 keV,
+adjacent boundaries differ by at most a factor of 1.28. The widest group in lethargy is
+0.1 to 0.53158 eV. The following code reproduces the boundaries in `GROUP_EDGES_EV` of
+[generate_xs.py](generate_xs.py) exactly.
+
+```python
+import numpy as np
+import openmc
+
+fine = openmc.mgxs.GROUP_STRUCTURES["VITAMIN-J-175"]
+fine = fine[fine <= 14.191e6]
+fine = np.unique(np.r_[0.0, 0.005, 0.01, 0.0253, 0.05, fine[1:]])
+kept = [0.0, 0.005, 0.01, 0.0253, 0.05, 0.1, 0.53158, 1.1253, 961.12, 9118.8, 23579.0,
+        24176.0, 24788.0, 1.0026e6, 1.0e7, 1.384e7, 14.191e6]
+indices = {int(np.argmin(abs(fine - e))) for e in kept}
+while len(indices) < 65:
+    gaps = sorted(indices)
+    _, a, b = max((b - a, a, b) for a, b in zip(gaps[:-1], gaps[1:]))
+    indices.add((a + b) // 2)
+edges = fine[sorted(indices)]
+```
+
+### Weighting and library contents
 
 Each material is weighted by its own spectrum in this problem. OpenMC tallies the
 tungsten, steel/water, steel, and borated-polyethylene cross sections in those regions of
