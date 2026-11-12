@@ -1,4 +1,4 @@
-[![Nightly Tests](https://github.com/Open-Sn/OpenSnAppsPublic/actions/workflows/nightly.yaml/badge.svg)](https://github.com/Open-Sn/OpenSnAppsPublic/actions/workflows/nightly.yaml)
+[![Regression Tests](https://github.com/Open-Sn/OpenSnAppsPublic/actions/workflows/regression.yaml/badge.svg)](https://github.com/Open-Sn/OpenSnAppsPublic/actions/workflows/regression.yaml)
 
 # OpenSn Examples
 

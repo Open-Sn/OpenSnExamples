@@ -1,0 +1,101 @@
+name: Regression Tests
+
+# The full regression suite runs every Friday at 6 PM US Central time and on demand. A pull request
+# or a push to main runs only the tests that it adds or affects, as select_test_cases.py decides.
+# When it selects none, the test job is skipped.
+on:
+  schedule:
+    - cron: "0 18 * * 5"
+      timezone: "America/Chicago"
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  select-cases:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      cases: ${{ steps.select.outputs.cases }}
+      coupled: ${{ steps.select.outputs.coupled }}
+    steps:
+      # The script reads both revisions with git, so it needs their history but not their files.
+      - name: checkout examples
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: .github
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: install pytest
+        run: pip install pytest
+      # A pull-request checkout is a merge commit whose first parent is the tip of main. A push
+      # compares the new tip of main with the commit it replaced.
+      - name: select tests
+        id: select
+        shell: bash
+        env:
+          BASE_REV: ${{ github.event_name == 'push' && github.event.before || 'HEAD^1' }}
+        run: |
+          python3 .github/scripts/select_test_cases.py "$BASE_REV" HEAD | tee -a "$GITHUB_OUTPUT"
+
+  run-tests:
+    needs: select-cases
+    if: >-
+      ${{ !cancelled() && (needs.select-cases.result == 'skipped' ||
+      (needs.select-cases.result == 'success' &&
+      (needs.select-cases.outputs.cases != '' || needs.select-cases.outputs.coupled == 'true'))) }}
+    runs-on: [self-hosted]
+    env:
+      # The schedule and manual runs skip select-cases and run the full suite.
+      FULL_SUITE: ${{ needs.select-cases.result == 'skipped' }}
+    strategy:
+      fail-fast: false
+    steps:
+      - name: checkout examples
+        uses: actions/checkout@v4
+      - name: checkout opensn
+        uses: actions/checkout@v4
+        with:
+          repository: Open-Sn/opensn
+          path: opensn
+      - name: compile opensn
+        shell: bash
+        run: |
+          module purge
+          module load python3/3.12.3 opensn/clang/17 openfoam-precice/14-3.4.1
+          cmake -S opensn -B opensn/build \
+            -DOPENSN_WITH_PYTHON_MODULE=ON \
+            -DOPENSN_WITH_PRECICE=ON
+          cmake --build opensn/build --parallel
+      - name: test examples
+        if: env.FULL_SUITE == 'true' || needs.select-cases.outputs.cases != ''
+        shell: bash
+        env:
+          SELECTED_CASES: ${{ needs.select-cases.outputs.cases }}
+        run: |
+          module purge
+          # OpenSn links libprecice, which only this module puts on the library path.
+          module load python3/3.12.3 opensn/clang/17 openfoam-precice/14-3.4.1
+          export OPENSN=$PWD/opensn/build/python/opensn
+          if [ "$FULL_SUITE" = true ]; then
+            export CASL_CASES=2A,2B,2D,2F,2G,2H,2K,2N,2P,2Q
+          else
+            export EXAMPLE_CASES="$SELECTED_CASES"
+          fi
+          python3 test.py
+      - name: test OpenSn-OpenFOAM coupling
+        if: env.FULL_SUITE == 'true' || needs.select-cases.outputs.coupled == 'true'
+        shell: bash
+        run: |
+          module purge
+          module load python3/3.12.3 opensn/clang/17 openfoam-precice/14-3.4.1
+          export OPENSN="$PWD/opensn/build/python/opensn"
+          OpenFOAM_Electron_Converter/openfoam_adapter/tests/run.sh
+          OpenFOAM_Electron_Converter/run_coupled_test.sh
