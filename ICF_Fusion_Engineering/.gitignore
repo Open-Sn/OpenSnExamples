@@ -1,0 +1,12 @@
+__pycache__/
+hohlraum.msh
+hohlraum_uncollided.h5
+hohlraum_uncollided.json
+hohlraum_uncollided*.pvtu
+hohlraum_uncollided*.vtu
+hohlraum_flux*.pvtu
+hohlraum_flux*.vtu
+hohlraum_results.json
+uncollided_reference.json
+openmc_seed*/
+xs_generation/

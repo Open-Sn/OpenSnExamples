@@ -1,0 +1,155 @@
+{
+  "created_utc": "2026-11-11T23:42:06.691653+00:00",
+  "library_sha256": "1f8541d56d2de5f984bed8fa817e8ce2d5c38a4c9416766693a49beb912cfaba",
+  "transport_corrected_library_sha256": "c97bdc8894173b89b8b6225b1d66c4c7e6665e8c616f20a7d460ba1a1fd5702d",
+  "generator_sha256": {
+    "generate_xs.py": "480563b38c1334df84588571b2e06ea70b1bd130312c56805e93232a419873b3",
+    "openmc_reference.py": "c2b42aa8685f7586dd2c117955b0b90a416258abb9e053f091176e06d83acd78"
+  },
+  "openmc_python_version": "0.15.4.dev175+g111eb7706",
+  "openmc_executable_version": "OpenMC version 0.15.4-dev175\nCommit hash: 111eb770668d2f8e39d7fd4524a08df8bf9819f5\nCopyright (c) 2011-2026 MIT, UChicago Argonne LLC, and contributors\nMIT/X license at <https://docs.openmc.org/en/latest/license.html>\nBuild type:            Release\nCompiler ID:           GNU 14.4.0\nMPI enabled:           yes\nParallel HDF5 enabled: yes\nPNG support:           yes\nDAGMC support:         no\nlibMesh support:       no\nCoverage testing:      no\nProfiling flags:       no\nUWUW support:          no\nStrict FP:             no",
+  "nuclear_data": {
+    "library": "ENDF/B-VIII.0 HDF5 library distributed by the OpenMC project",
+    "files_sha256": {
+      "Al27.h5": "f766ee2568ecac47546ed1ae61d9907df2aceb7cd6dcc7eb2930df935d94e805",
+      "Au197.h5": "9d394fb5d382c0f7a3b6b4f5f276d8a6ebb71628d1bdf8a9b26119f91f7d99a6",
+      "C12.h5": "80a09447abf9820a53344ba0678f92bd497ba0e6a076b022a7f74ed3d7256905",
+      "C13.h5": "d28169a1eacea95062b662afc493fb99b6dba947a028188eca29555ae55924da",
+      "H1.h5": "5252b5e931c7d5aa6bab34867e77b158b9d3dafbf99ecd5c6758379955eebe2b",
+      "H2.h5": "19f42e5e94ed5c4bf84cc90b78b8c34fc74f7cab86f80799cf93f430f1f44e8d",
+      "He3.h5": "f771225faebcbb1c3ed182fb3a174b42cfb83a32433df026ceb898bab00b31bd",
+      "He4.h5": "c9881783d3efbb2693a6ebe99f17d939c8a8f8184e4e79e884e7c1039a18ea52",
+      "N14.h5": "d2684f2a0dff452273a9e57cb53cec6bf50ad111d4e226087deaa5763a468451",
+      "N15.h5": "e0e64aacaf1a8e8ee3e140cf3c475d9ade635bd6497e432145387a0c730106ad",
+      "O16.h5": "161ce942105208ed6a45ce4b94fc0eeb842aa1083193af3a3cd280d149d4159e",
+      "O17.h5": "5a00a43fbfe210f5be27a2ac0d0d3182fdddfe26c08c7044e6ad49d605970448",
+      "O18.h5": "6bdf5e9415405934ae6be42b6905d35bbc46da3665938983efd99ebc0c0715c2"
+    }
+  },
+  "settings": {
+    "mgxs_types": [
+      "total",
+      "absorption",
+      "consistent scatter matrix",
+      "consistent nu-scatter matrix"
+    ],
+    "reactions": {
+      "(n,2n)": "n2n",
+      "(n,gamma)": "ngamma",
+      "(n,a)": "nalpha"
+    },
+    "legendre_order": 5,
+    "transport_correction": null,
+    "transport_corrected_library": {
+      "file": "materials_64g_p3tc.h5",
+      "legendre_order": 3,
+      "correction": "extended transport correction with the within-group P4 moment, negative values set to zero",
+      "largest_correction_relative_to_total": {
+        "aluminum": 0.16621898921703684,
+        "gold": 0.2807825966152885,
+        "helium": 0.12156519486920636,
+        "polyimide": 0.1421292146450106,
+        "void": 0.0
+      }
+    },
+    "temperature_K": 293.6,
+    "source_energy_eV": 14100000.0,
+    "smooth_source_fraction": 0.01,
+    "smooth_source_min_energy_eV": 1e-05,
+    "cube_side_cm": 100000.0,
+    "particles_per_batch": 1000000,
+    "batches": 100,
+    "seeds": {
+      "gold": 7,
+      "aluminum": 8,
+      "polyimide": 9,
+      "helium": 10
+    },
+    "mpi_processes": 64,
+    "threads_per_process": null
+  },
+  "inputs_sha256": {
+    "gold": {
+      "geometry.xml": "cee81804ad81b1ec34f34d365ab5633f2a9071d6b97c28853c307049581b7440",
+      "materials.xml": "91f9ddb15987880685c680080be7bb2f8d7563a2a028250e93cab02e495caba6",
+      "settings.xml": "132797bf23ecb4a0fa512f75ef4bc38b19853186a7bcadf32695c28c1de33b5d",
+      "tallies.xml": "2cb3360c635bb3287fdb92bbf3500d167923f99338d6794a549585b33e88ac5a",
+      "statepoint": "51723cba53a62c8e177ae41a2310daa298a3dfc022c83c3a1de4116b519c9ed1"
+    },
+    "aluminum": {
+      "geometry.xml": "3d1c97054a870e81b31ad00f5ef5c38cae23a94a1171ca57acb576bd8bd9a4ad",
+      "materials.xml": "9a2fbdffe1a12c0c2fee27910b90ce1b83b1e5968e928e892ee59961493e99c1",
+      "settings.xml": "4bc7fa0c466c5fafee039eae4d733f17e69dc4183a9d328cd5abfd8768fc44b9",
+      "tallies.xml": "a2090f72b2fdb6bb60e619232c9bf9fc2dfa460f5e40318bb6f1713ece8d625c",
+      "statepoint": "4b74af34e3fdad7d7ab560a930b9c1d0011ccf20bcd563cdc19615c651a6ebb9"
+    },
+    "polyimide": {
+      "geometry.xml": "399dfb18ecc1b1c56c2c44d7296e45defa2cff2585adf22eadcf8a4b1c4ebae4",
+      "materials.xml": "7b22fdf2850bed1dcd6c0c856bb3f1b43fda5b551b8a2b9b7f153c943c2e2ca4",
+      "settings.xml": "6cba2f1cfbdccfd5fe6552b150da0ab7d72bce27391e16a2322e269cf20bc2e6",
+      "tallies.xml": "b9eb658b19b8c22b3c13106c14a9cfb91e05978249a0ae28a8ab318217388830",
+      "statepoint": "6760f9c7d18813efe8294f50fc250c8a1d45c123f23f261f02991c9b8d48f108"
+    },
+    "helium": {
+      "geometry.xml": "a944c0e4fb06086bf7e769f2a52cd2c93fc25a86a6cd6883f77dc9f1a10089bc",
+      "materials.xml": "eca10d2968061d8560d452002a62b294beeb1318359b819187f337624ab34cfe",
+      "settings.xml": "613da8abff8dd28804e7999633f6bf8129ac6d9f3e9fc2ce8a9a6627593ff213",
+      "tallies.xml": "af5ef1e0cde53f82f3e2c29fbcc2770910ab5af69106aa1fa04a99b506d3d3ac",
+      "statepoint": "93c3f2f7eed16199304f105fd7b5151da59cbfe56040eafd5bb3360bde20d9e8"
+    }
+  },
+  "materials": {
+    "gold": {
+      "total_relative_std_dev_max": 0.013690496870171789,
+      "total_relative_std_dev_median": 0.000881218518873192,
+      "groups_with_total_relative_std_dev_above_1_percent": 9,
+      "collision_closure_max": 1.2355125879656916e-15,
+      "multiplying_groups": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "aluminum": {
+      "total_relative_std_dev_max": 0.003911775985319664,
+      "total_relative_std_dev_median": 0.0002588721842161477,
+      "groups_with_total_relative_std_dev_above_1_percent": 0,
+      "collision_closure_max": 1.1979691288845619e-15,
+      "multiplying_groups": [
+        0,
+        1
+      ]
+    },
+    "polyimide": {
+      "total_relative_std_dev_max": 0.0011352112680450659,
+      "total_relative_std_dev_median": 0.00037801862490206123,
+      "groups_with_total_relative_std_dev_above_1_percent": 0,
+      "collision_closure_max": 1.1338861563657301e-15,
+      "multiplying_groups": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    "helium": {
+      "total_relative_std_dev_max": 0.0009602691077625337,
+      "total_relative_std_dev_median": 0.00025944057069740215,
+      "groups_with_total_relative_std_dev_above_1_percent": 0,
+      "collision_closure_max": 1.6002140446652939e-15,
+      "multiplying_groups": []
+    }
+  }
+}
