@@ -45,6 +45,17 @@ TEST_CASES = [
         ],
     ),
     (
+        os.path.join("Coiled_Wire_Electron_Photon", "coil.py"),
+        None,
+        32,
+        None,
+        [
+            sys.executable,
+            os.path.join(EXAMPLES_ROOT, "Coiled_Wire_Electron_Photon", "check_results.py"),
+            os.path.join(EXAMPLES_ROOT, "Coiled_Wire_Electron_Photon", "coil_results.json"),
+        ],
+    ),
+    (
         os.path.join("Six_1g_spherical_benchmarks", "Problem_1.py"),
         {"end-radius:": 1.00, "avg-value:": 8.212354},
         12,

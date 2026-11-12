@@ -1,0 +1,8 @@
+# Outputs of coil.py, openmc_reference.py, and make_dagmc.py.
+coil_results.json
+coil_deposition*.vtu
+coil_deposition*.pvtu
+coil.h5m
+model.xml
+summary.h5
+statepoint.*.h5

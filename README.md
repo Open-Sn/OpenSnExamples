@@ -21,7 +21,10 @@ A short description of each example is given below:
     Forty-group electron-photon CSDA transport coupled conservatively to a
     six-region OpenFOAM conjugate-heat-transfer calculation through preCICE
 - [Tokamak Fusion Engineering](./Tokamak_Fusion_Engineering/README.md):
-    3D 64-group fusion shielding problem compared with continuous-energy OpenMC.
+    3D 64-group fusion shielding problem compared with continuous-energy OpenMC
 - [ICF Fusion Engineering](./ICF_Fusion_Engineering/README.md):
     3D 64-group uncollided-flux calculation of a DT point source in an indirect-drive
-    ICF hohlraum compared with continuous-energy OpenMC.
+    ICF hohlraum compared with continuous-energy OpenMC
+- [Coiled Wire Electron-Photon](./Coiled_Wire_Electron_Photon/README.md):
+    3D coupled photon-electron CSDA transport in an insulated copper coil, with
+    energy and charge deposition and an OpenMC photon comparison
