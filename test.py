@@ -138,7 +138,31 @@ def load_casl_2d_test_cases():
     return cases
 
 
+def select_test_cases(cases):
+    """Restrict the cases to those named in EXAMPLE_CASES.
+
+    EXAMPLE_CASES is a comma-separated list of input files, written relative to this directory as
+    in TEST_CASES. When it is not set, every case runs. When it is set but empty, no case runs. For
+    a pull request or a push to main, the workflow sets it to the cases that the change adds or
+    affects.
+    """
+    selected_cases_text = os.environ.get("EXAMPLE_CASES")
+    if selected_cases_text is None:
+        return cases
+
+    selected_cases = {
+        os.path.normpath(case.strip()) for case in selected_cases_text.split(",") if case.strip()
+    }
+    available_cases = {os.path.normpath(case[0]) for case in cases}
+    unknown_cases = selected_cases - available_cases
+    if unknown_cases:
+        raise ValueError(f"Unknown EXAMPLE_CASES: {', '.join(sorted(unknown_cases))}")
+
+    return [case for case in cases if os.path.normpath(case[0]) in selected_cases]
+
+
 TEST_CASES.extend(load_casl_2d_test_cases())
+TEST_CASES = select_test_cases(TEST_CASES)
 
 
 @pytest.mark.parametrize("input_file, expected, mpi_ranks, rel_tol, extra_check_cmd", TEST_CASES)
