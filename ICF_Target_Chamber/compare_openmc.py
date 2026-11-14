@@ -12,8 +12,9 @@ exact. The script prints, for each OpenSn result given:
 - the uncollided flux in each block against the semi-analytic value computed with the
   group-0 total cross section of the library (uncollided_reference.py), and the uncollided
   flux of OpenMC against the value computed with the continuous-energy cross sections;
-- the total and collided flux and the absorption rate in each block, and the leakage, against
-  OpenMC, as relative differences and in standard errors of OpenMC;
+- the total and collided flux and the absorption, (n,2n), (n,gamma) and (n,alpha) rates in
+  each block, and the leakage, against OpenMC, as relative differences and in standard errors of
+  OpenMC;
 - the RMS of the relative differences of the group spectra in each block, over the groups
   that hold at least 1% of the quantity and whose OpenMC standard error is below 5%;
 - the RMS and largest relative difference along each line-out, the OpenSn values averaged over
@@ -109,7 +110,8 @@ def compare(name, openmc, opensn, uncollided, exact, edges):
           f"{'diff':>8s} {'in sigma':>8s} {'spectrum RMS':>12s}")
     for block in BLOCKS:
         for quantity, label in (("flux", "total"), ("collided", "collided"),
-                                ("absorption", "absorption")):
+                                ("absorption", "absorption"), ("n2n", "(n,2n)"),
+                                ("ngamma", "(n,gamma)"), ("nalpha", "(n,alpha)")):
             if quantity == "collided":
                 ours_groups = (np.asarray(opensn["regions"][block]["flux"])
                                - np.asarray(uncollided["regions"][block]["flux"]))
