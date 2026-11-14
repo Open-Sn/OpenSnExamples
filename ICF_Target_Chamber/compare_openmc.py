@@ -18,7 +18,8 @@ exact. The script prints, for each OpenSn result given:
 - the RMS of the relative differences of the group spectra in each block, over the groups
   that hold at least 1% of the quantity and whose OpenMC standard error is below 5%;
 - the RMS and largest relative difference along each line-out, the OpenSn values averaged over
-  the bins of OpenMC, over the bins whose OpenMC standard error is below 10%;
+  the bins of OpenMC, over the bins whose OpenMC standard error is below 10%, and for the arc
+  also without the bins within 0.5 degrees of the edges of the beam;
 - the RMS and largest relative difference of the uncollided flux of OpenSn along each line-out
   against the exact values at the same points, computed with the group-0 total cross section of
   the library.
@@ -41,6 +42,9 @@ import numpy as np
 import chamber_geometry as geometry
 
 BLOCKS = list(geometry.BLOCKS.values())
+# Angle (degrees) between the axis of the 23.5 degree port and the edge of its beam on the arc
+# of radius 650 cm: the beam edge is near the cone at the distance (port radius) t / 525 cm.
+ARC_BEAM_EDGE = math.degrees(math.atan(geometry.BEAM_PORT_RADIUS / 525.0))
 
 
 def load(path):
@@ -155,6 +159,14 @@ def compare(name, openmc, opensn, uncollided, exact, edges):
             difference = ours[good] / mc[good] - 1.0
             print(f"{line:10s} {part:>10s} {int(good.sum()):5d} "
                   f"{math.sqrt(np.mean(difference**2)):9.2%} {np.max(np.abs(difference)):9.2%}")
+            if line == "arc":
+                # The beam edges are near 2.7 degrees from the axis at 650 cm: the bins within
+                # 0.5 degrees of them are left out.
+                away = good & (np.abs(np.abs(centres) - ARC_BEAM_EDGE) > 0.5)
+                difference = ours[away] / mc[away] - 1.0
+                print(f"{'  no edges':10s} {part:>10s} {int(away.sum()):5d} "
+                      f"{math.sqrt(np.mean(difference**2)):9.2%} "
+                      f"{np.max(np.abs(difference)):9.2%}")
     print(f"{'Line-out':10s} {'uncollided vs exact (library sigma_t)':>40s} {'RMS diff':>9s} "
           f"{'max diff':>9s} {'in beam (>1% of max): RMS':>26s}")
     for line in ("port", "shield", "arc"):
