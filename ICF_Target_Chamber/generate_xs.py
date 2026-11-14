@@ -107,7 +107,7 @@ def build_model(particles, batches, seed):
     return model, library
 
 
-def run(model, threads):
+def run(model, threads, processes=1):
     """Run the model, or restart it from its last statepoint; return the final statepoint."""
     batches = model.settings.batches
     final = RUN_DIR / f"statepoint.{batches}.h5"
@@ -120,7 +120,8 @@ def run(model, threads):
     checkpoints = sorted(RUN_DIR.glob("statepoint.*.h5"), key=lambda p: int(p.suffixes[0][1:]))
     restart = checkpoints[-1].name if checkpoints else None
     start = time.perf_counter()
-    openmc.run(cwd=RUN_DIR, threads=threads, restart_file=restart)
+    mpi_args = ["mpiexec", "-n", str(processes)] if processes > 1 else None
+    openmc.run(cwd=RUN_DIR, threads=threads, restart_file=restart, mpi_args=mpi_args)
     return final, time.perf_counter() - start
 
 
@@ -247,6 +248,8 @@ def main():
     parser.add_argument("--batches", type=int, default=50)
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--threads", type=int, default=None, help="OpenMP threads")
+    parser.add_argument("--processes", type=int, default=1,
+                        help="MPI processes, for an OpenMC built with MPI (mpiexec -n)")
     parser.add_argument("--edges", type=float, nargs="+", default=COARSE_EDGES_EV,
                         help="Edges (eV) of the few-group library, a subset of the 64 groups")
     args = parser.parse_args()
@@ -257,7 +260,7 @@ def main():
         raise ValueError(f"few-group edges {missing} are not edges of the 64 groups")
 
     model, library = build_model(args.particles, args.batches, args.seed)
-    statepoint, seconds = run(model, args.threads)
+    statepoint, seconds = run(model, args.threads, args.processes)
     with openmc.StatePoint(statepoint) as sp:
         library.load_from_statepoint(sp)
 

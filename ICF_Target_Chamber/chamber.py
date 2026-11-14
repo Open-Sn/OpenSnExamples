@@ -42,6 +42,9 @@ Other arguments (opensn --py name=value):
                   most this many groups (default 0: one groupset); the GMRES vectors of a
                   groupset are copies of its flux moments, so smaller groupsets need less memory
     gmres_restart GMRES restart length of the 64-group groupsets (default 10)
+    conservation_correction  uncollided stage: False keeps the flux projected from the ray-traced
+                  values, without the cell-wise conservation correction (default True); the
+                  collided stage needs the corrected flux
 
 For example, on 32 ranks:
 
@@ -101,6 +104,8 @@ if "groupset_size" not in globals():
     groupset_size = 0  # 0: the groups without upscattering form one groupset
 if "gmres_restart" not in globals():
     gmres_restart = 10
+if "conservation_correction" not in globals():
+    conservation_correction = True
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIBRARY_FILE = os.path.join(HERE, f"materials_{library}.h5")
@@ -168,18 +173,17 @@ def line_values(problem):
 
 def map_values(problem):
     """Group-wise scalar flux on the (r, z) grid of the OpenMC map, in the half-plane of azimuth
-    45 degrees, z > 0: [z, r, groups]. The cell centres of a 10 cm grid; points outside the
-    outer sphere are 0."""
+    45 degrees, z > 0: [z, r, groups], at the centres of a 10 cm grid."""
     centres = np.arange(5.0, geometry.R_AIR, 10.0)
-    points, inside = [], []
-    for z in centres:
-        for r in centres:
-            inside.append(math.hypot(r, z) < geometry.R_AIR - 1.0e-6)
-            points.append(Vector3(r / math.sqrt(2.0), r / math.sqrt(2.0), z))
+    # The faceted outer surface of the mesh lies up to a few cm inside the sphere: points
+    # beyond 790 cm are left at zero.
+    inside = [math.hypot(r, z) < geometry.R_AIR - 10.0 for z in centres for r in centres]
+    points = [Vector3(r / math.sqrt(2.0), r / math.sqrt(2.0), z)
+              for z in centres for r in centres if math.hypot(r, z) < geometry.R_AIR - 10.0]
     fluxes = problem.GetScalarFluxFieldFunction()
     values = FieldFunctionGridBased.GetPointValues(fluxes, points)
-    result = np.array([[v[0] for v in group] for group in values]).T
-    result[~np.array(inside)] = 0.0
+    result = np.zeros((len(inside), len(fluxes)))
+    result[np.array(inside)] = np.array([[v[0] for v in group] for group in values]).T
     return result.reshape(len(centres), len(centres), -1)
 
 
@@ -205,6 +209,7 @@ def compute_uncollided(grid, xs_map, num_groups, scattering_order):
         ray_tracer="material_hull",
         exact_near_source_leakage=True,
         scattering_order=scattering_order,
+        conservation_correction=conservation_correction,
     )
     solver = UncollidedSolver(problem=problem, file_name=f"{prefix}_uncollided.h5",
                               diagnostics_file=f"{prefix}_uncollided_diagnostics.h5")

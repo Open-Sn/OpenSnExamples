@@ -372,6 +372,8 @@ def main():
     parser.add_argument("--batches", type=int, default=100)
     parser.add_argument("--seed", type=int, default=20261113)
     parser.add_argument("--threads", type=int, default=None, help="OpenMP threads")
+    parser.add_argument("--processes", type=int, default=1,
+                        help="MPI processes, for an OpenMC built with MPI (mpiexec -n)")
     parser.add_argument("--export-only", action="store_true",
                         help="Write the OpenMC XML input without running it")
     parser.add_argument("--collect-only", type=int, default=None, metavar="N",
@@ -388,7 +390,8 @@ def main():
         if args.export_only:
             return
         start = time.perf_counter()
-        openmc.run(cwd=run_dir, threads=args.threads)
+        mpi_args = ["mpiexec", "-n", str(args.processes)] if args.processes > 1 else None
+        openmc.run(cwd=run_dir, threads=args.threads, mpi_args=mpi_args)
         seconds = time.perf_counter() - start
     report = collect(run_dir, args.batches)
     report.update(particles_per_batch=args.particles, seed=args.seed, threads=args.threads,
