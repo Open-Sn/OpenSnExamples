@@ -244,21 +244,27 @@ def maps_figure(theme, out, mode, openmc, runs):
 
 
 def sn_only_figure(theme, out, mode, openmc, runs, sn_only):
+    """Discrete ordinates alone against uncollided + collided, beyond the shield along the port
+    axis and across its beam, on a linear scale so that negative values show."""
     label, results, _ = runs[0]
-    fig, ax = figure(theme, figsize=(6.5, 4.0))
-    x = np.asarray(geometry.line_points()["arc"][0])
-    mean, error = (np.asarray(v) for v in openmc["total"]["lines"]["arc"])
-    ax.errorbar(openmc["line_abscissae"]["arc"], mean, yerr=error, fmt="o", markersize=3,
-                color=theme["text"], label="OpenMC")
-    ax.plot(x, np.asarray(results["lines"]["arc"]).sum(axis=1), color=theme["series"][0],
-            linewidth=1.5, label=f"uncollided + collided, {label}")
-    ax.plot(x, np.asarray(sn_only["lines"]["arc"]).sum(axis=1), color=theme["series"][1],
-            linewidth=1.5, label="discrete ordinates alone")
-    ax.set_yscale("log")
-    ax.set_xlabel("angle to the port axis (degrees)")
-    ax.set_ylabel("total flux per source neutron (1/cm²)")
-    ax.set_title("Across the beam of a 23.5° port at r = 650 cm", fontsize=10)
-    legend(ax, theme, loc="lower center")
+    fig, axes = figure(theme, 1, 2, figsize=(11.0, 4.0))
+    for ax, line in zip(axes, ("port", "arc")):
+        x = np.asarray(geometry.line_points()[line][0])
+        keep = x > 520.0 if line == "port" else np.ones(len(x), bool)
+        mc_x = np.asarray(openmc["line_abscissae"][line])
+        mc_keep = mc_x > 520.0 if line == "port" else np.ones(len(mc_x), bool)
+        mean, error = (np.asarray(v) for v in openmc["total"]["lines"][line])
+        ax.errorbar(mc_x[mc_keep], mean[mc_keep], yerr=error[mc_keep], fmt="o", markersize=3,
+                    color=theme["text"], label="OpenMC")
+        ax.plot(x[keep], np.asarray(results["lines"][line]).sum(axis=1)[keep],
+                color=theme["series"][0], linewidth=1.5, label=f"uncollided + collided, {label}")
+        ax.plot(x[keep], np.asarray(sn_only["lines"][line]).sum(axis=1)[keep],
+                color=theme["series"][1], linewidth=1.5, label="discrete ordinates alone")
+        ax.axhline(0.0, color=theme["secondary"], linewidth=0.8)
+        ax.set_xlabel("angle to the port axis (degrees)" if line == "arc" else "radius (cm)")
+        ax.set_title(LINE_TITLES[line], fontsize=9)
+    axes[0].set_ylabel("total flux per source neutron (1/cm²)")
+    legend(axes[1], theme, loc="upper right")
     save(fig, out, "sn-only", mode)
 
 
