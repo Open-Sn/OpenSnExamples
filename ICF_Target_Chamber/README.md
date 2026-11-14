@@ -284,7 +284,7 @@ Uncollided flux in each block, OpenSn against the semi-analytic integral compute
 group-0 total cross section of its library, and OpenMC against the integral computed with the
 continuous-energy cross sections at 14.1 MeV (standard error of OpenMC in parentheses):
 
-| Block | 4 groups P0 corrected, fine mesh | 4 groups P0 corrected, coarse mesh | 64 groups P3, coarse mesh | 4 groups P0 (no correction), fine mesh | 64 groups P3, h20 mesh | OpenMC against the semi-analytic value (continuous energy) |
+| Block | 4 groups P0 corrected, fine mesh | 4 groups P0 corrected, coarse mesh | 64 groups P3, coarse mesh | 4 groups P0 (no correction), fine mesh | 64 groups P3, 61,368 tetrahedra | OpenMC against the semi-analytic value (continuous energy) |
 | --- | --- | --- | --- | --- | --- | --- |
 | cavity and ports | -0.005% | -0.022% | -0.022% | -0.005% | -0.042% | +0.000% (± 5.3e-07) |
 | wall | +0.008% | +0.093% | +0.093% | +0.008% | +0.190% | +0.002% (± 1.8e-05) |
@@ -304,7 +304,7 @@ with the semi-analytic values to its standard error.
 Per source neutron, for the whole chamber. OpenMC value with its relative standard error, and
 the relative difference of each OpenSn configuration with it:
 
-| Quantity | OpenMC | 4 groups P0 corrected, fine mesh | 4 groups P0 corrected, coarse mesh | 64 groups P3, coarse mesh | 4 groups P0 (no correction), fine mesh | 64 groups P3, h20 mesh |
+| Quantity | OpenMC | 4 groups P0 corrected, fine mesh | 4 groups P0 corrected, coarse mesh | 64 groups P3, coarse mesh | 4 groups P0 (no correction), fine mesh | 64 groups P3, 61,368 tetrahedra |
 | --- | --- | --- | --- | --- | --- | --- |
 | cavity and ports, total flux | 1120 (± 3e-05) | +9.1% | +8.4% | +0.4% | +29.7% | +0.3% |
 | cavity and ports, collided flux | 618.3 (± 6e-05) | +16.5% | +15.3% | +0.7% | +53.7% | +0.5% |
