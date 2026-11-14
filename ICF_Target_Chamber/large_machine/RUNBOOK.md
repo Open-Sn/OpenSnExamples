@@ -117,7 +117,8 @@ j1=$(sbatch --parsable --dependency=afterok:$j0 01_uncollided.sbatch)  # 4 nodes
 j2=$(sbatch --parsable --dependency=afterok:$j1 02_collided.sbatch)    # 16 nodes x 32 ranks
 ```
 
-When `$j2` has finished, run `./04_compare.sh`.
+When `$j2` has finished, run `./04_compare.sh` (comparison and figures, section G), and
+optionally `./05_visit.sh` (three-dimensional views with VisIt).
 
 What to expect:
 
@@ -169,7 +170,53 @@ module. The OpenMC on your cluster may be built differently. Check these points:
 To compare with your own reference, give `04_compare.sh` its results file:
 `REFERENCE=$RUN_DIR/openmc_seed20261114/results.json ./04_compare.sh`.
 
-## G. Checks
+## G. Figures
+
+Two scripts make the figures, written in light and dark versions to `$RUN_DIR/assets/`.
+
+**`./04_compare.sh`** prints the comparison with OpenMC, then runs `make_figures.py`
+(Matplotlib, no VisIt) on the fine run. It makes the same figures as the README of the
+example, with this run in place of the README's runs:
+
+| File | Figure |
+|---|---|
+| `geometry-*.png` | the regions and the ports |
+| `cross-sections-*.png` | the total and absorption cross sections of the libraries |
+| `profiles-*.png` | the flux along the three line-outs (port axis, shield, across a beam), OpenSn against OpenMC |
+| `regions-*.png` | the difference with OpenMC of the total flux in each block and of the leakage |
+| `spectra-*.png` | the flux spectrum in each block, OpenSn against OpenMC |
+| `maps-*.png` | the total flux in the half-plane of azimuth 45 degrees, OpenSn, OpenMC and their ratio |
+
+It takes seconds (4 s here for a 64-group run) and reads only the small JSON files of the
+run, so a login node is fine.
+
+**`./05_visit.sh`** (optional) renders `<prefix>_flux.pvtu` with VisIt (tested with VisIt
+3.5.0), through [../visit_figures.py](../visit_figures.py):
+
+- `<prefix>_flux3d-outside-*.png`: the outer sphere, where the beams of the ports arrive;
+- `<prefix>_flux3d-planes-*.png`: the three symmetry planes, through the cavity, the wall, the
+  shield, the air and the ports.
+
+The color is 4πr² times the total flux, on a log scale over three decades below its maximum.
+This product is 1 for the uncollided flux in a void, so the views show the attenuation and the
+port beams. The spots on the outer sphere between the ports are the ray effects of the
+collided flux at 144 directions. Before running it:
+
+- set `VISIT` in `env.sh` to the VisIt command of your machine, after any `module load`;
+- run it on a compute node: the `.pvtu` of the fine 64-group run is several GB;
+- for a parallel engine, set `VISIT_ARGS="-np 32"`, for example.
+
+On a 1.3 M-tetrahedron, 4-group file, a serial engine took 12 s here. The fine 64-group file
+was not tried; we expect minutes (an estimate).
+
+`visit_figures.py --help`, run through `visit -nowin -cli -s`, lists the options:
+`--quantity flux` plots the flux itself, and `--min`, `--max` and `--range` set the color
+scale.
+
+To redraw the README figures with this run next to ours, we need the JSON files listed in
+section I.
+
+## H. Checks
 
 - The log of stage 1 prints "Conservation error" at about 1e-15.
 - The log of stage 2 prints a relative balance of about 1e-8 and a production rate of 0.125.
@@ -178,11 +225,12 @@ To compare with your own reference, give `04_compare.sh` its results file:
   On this mesh the differences should be at most about 0.15%; they are the faceting of the
   ports.
 
-## H. What to send back
+## I. What to send back
 
 - `<prefix>.uncollided.log` and `<prefix>.collided.log`
-- `<prefix>_results.json` and `<prefix>.comparison.txt`
-- the `assets/` directory written by `04_compare.sh`
+- `<prefix>_results.json`, `<prefix>_uncollided.json` and `<prefix>.comparison.txt`; with the
+  two JSON files we can redraw every figure of the README with this run
+- the `assets/` directory written by `04_compare.sh` and `05_visit.sh`
 - the output of `sacct -j <job> --format=JobID,Elapsed,MaxRSS,NNodes` for the mesh, stage-1
   and stage-2 jobs
 
