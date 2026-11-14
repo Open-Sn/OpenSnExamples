@@ -31,7 +31,7 @@ tools (Gmsh, OpenMC, the comparison) come from `../environment.yml`.
 
 ## Choosing the mesh, the quadrature and the number of ranks
 
-The memory of stage 2 was measured on this example (the pilots of the parent README). For N
+The memory of stage 2 was measured on this example, on one 32-core node. For N
 tetrahedra and D directions, with groupsets solved by GMRES:
 
 - 4 groups, P0: peak memory = N x (0.43 D + 17) kB, plus about 0.15 GB per rank (measured on
