@@ -123,7 +123,8 @@ def main():
         print(f"{name}: total cross sections (1/cm) "
               + ", ".join(f"{MATERIALS[b]} {s:.6e}" for b, s in sigma_t.items()))
         for block, value in regions.items():
-            print(f"  {block:17s} {value:.8e} cm (rule change {report[name]['rule_change'][block]:.1e})")
+            change = report[name]["rule_change"][block]
+            print(f"  {block:17s} {value:.8e} cm (rule change {change:.1e})")
         print(f"  leakage           {leakage:.8e}")
     report["line_abscissae"] = {line: x.tolist()
                                 for line, (x, _) in geometry.line_points().items()}

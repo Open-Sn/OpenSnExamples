@@ -52,7 +52,7 @@ def coarse_map(fine_edges, coarse_edges):
     for g in range(len(fine) - 1):
         middle = 0.5 * (fine[g] + fine[g + 1])
         result.append(next(k for k in range(len(coarse) - 1)
-                            if coarse[k + 1] <= middle <= coarse[k]))
+                           if coarse[k + 1] <= middle <= coarse[k]))
     return np.array(result)
 
 
