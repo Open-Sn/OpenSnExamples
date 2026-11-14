@@ -41,7 +41,7 @@ Other arguments (opensn --py name=value):
     groupset_size 64 groups only: split the groups without upscattering into groupsets of at
                   most this many groups (default 0: one groupset); the GMRES vectors of a
                   groupset are copies of its flux moments, so smaller groupsets need less memory
-    gmres_restart GMRES restart length of the 64-group groupsets (default 10)
+    gmres_restart GMRES restart length of the 64-group groupsets (default 5)
     conservation_correction  uncollided stage: False keeps the flux projected from the ray-traced
                   values, without the cell-wise conservation correction (default True); the
                   collided stage needs the corrected flux
@@ -103,7 +103,7 @@ if "prefix" not in globals():
 if "groupset_size" not in globals():
     groupset_size = 0  # 0: the groups without upscattering form one groupset
 if "gmres_restart" not in globals():
-    gmres_restart = 10
+    gmres_restart = 5
 if "conservation_correction" not in globals():
     conservation_correction = True
 
