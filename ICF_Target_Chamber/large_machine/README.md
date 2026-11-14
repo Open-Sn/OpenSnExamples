@@ -8,6 +8,9 @@ P3 library on a fine mesh with a larger quadrature, and a longer OpenMC referenc
 Everything else (the libraries, the semi-analytic uncollided flux, the comparison and figure
 scripts) is in the parent directory and does not need to be regenerated.
 
+[RUNBOOK.md](RUNBOOK.md) gives the whole sequence, from building OpenSn to the files to send
+back, with the notes on running OpenMC on another cluster.
+
 ## Steps
 
 Edit the lines marked `CHANGE_ME` in `env.sh` and in the `#SBATCH` headers, then, from this
