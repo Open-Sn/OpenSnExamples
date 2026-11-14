@@ -17,7 +17,10 @@ exact. The script prints, for each OpenSn result given:
 - the RMS of the relative differences of the group spectra in each block, over the groups
   that hold at least 1% of the quantity and whose OpenMC standard error is below 5%;
 - the RMS and largest relative difference along each line-out, the OpenSn values averaged over
-  the bins of OpenMC, over the bins whose OpenMC standard error is below 10%.
+  the bins of OpenMC, over the bins whose OpenMC standard error is below 10%;
+- the RMS and largest relative difference of the uncollided flux of OpenSn along each line-out
+  against the exact values at the same points, computed with the group-0 total cross section of
+  the library.
 
 With --check TOL the script exits with an error if a total flux in a block or the leakage
 differs from OpenMC by more than TOL (relative), or an uncollided block integral differs from
@@ -150,6 +153,17 @@ def compare(name, openmc, opensn, uncollided, exact, edges):
             difference = ours[good] / mc[good] - 1.0
             print(f"{line:10s} {part:>10s} {int(good.sum()):5d} "
                   f"{math.sqrt(np.mean(difference**2)):9.2%} {np.max(np.abs(difference)):9.2%}")
+    print(f"{'Line-out':10s} {'uncollided vs exact (library sigma_t)':>40s} {'RMS diff':>9s} "
+          f"{'max diff':>9s} {'in beam (>1% of max): RMS':>26s}")
+    for line in ("port", "shield", "arc"):
+        ours = np.asarray(uncollided["lines"][line]).sum(axis=1)
+        reference = np.asarray(exact_lib["lines"][line])
+        good = reference > 1.0e-6 * reference.max()
+        difference = ours[good] / reference[good] - 1.0
+        beam = reference > 1.0e-2 * reference.max()
+        beam_difference = ours[beam] / reference[beam] - 1.0
+        print(f"{line:10s} {int(good.sum()):40d} {math.sqrt(np.mean(difference**2)):9.2%} "
+              f"{np.max(np.abs(difference)):9.2%} {math.sqrt(np.mean(beam_difference**2)):26.2%}")
     return checked
 
 
