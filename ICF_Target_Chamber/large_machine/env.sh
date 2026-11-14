@@ -15,6 +15,10 @@ export CHAMBER_PYTHON=${CHAMBER_PYTHON:-$HOME/miniforge3/envs/chamber/bin/python
 # ENDF/B-VIII.0 HDF5 library distributed by the OpenMC project (CHANGE_ME).
 export OPENMC_CROSS_SECTIONS=${OPENMC_CROSS_SECTIONS:-$HOME/nuclear_data/endfb-viii.0-hdf5/cross_sections.xml}
 
+# VisIt, for the optional three-dimensional views of 05_visit.sh: the command, after any module
+# load the machine needs (CHANGE_ME).
+export VISIT=${VISIT:-visit}
+
 # The fine configuration. See README.md for the memory each choice needs.
 export MESH=${MESH:-chamber_h10p3}           # file name without .msh
 export MESH_SIZE=${MESH_SIZE:-10}            # generate_mesh.py --size

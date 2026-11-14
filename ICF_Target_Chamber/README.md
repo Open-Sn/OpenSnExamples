@@ -484,6 +484,7 @@ not the accurate one. The 64-group library on the fine mesh, prepared in
 | [uncollided_reference.py](uncollided_reference.py) | semi-analytic uncollided flux in each block and along the line-outs |
 | [compare_openmc.py](compare_openmc.py) | comparison of OpenSn with OpenMC and with the exact uncollided flux |
 | [make_figures.py](make_figures.py) | figures of this README, light and dark |
+| [visit_figures.py](visit_figures.py) | optional three-dimensional views of the total flux with VisIt, light and dark |
 | `materials_64g_p3.h5`, `materials_4g_p0tc.h5`, `materials_4g_p0.h5` | the libraries |
 | [provenance/materials.json](provenance/materials.json) | statistics of the libraries, settings, SHA-256 of inputs, outputs and nuclear data |
 | `openmc_reference_results.json` | the OpenMC reference: 10^9 histories in 100 batches |
@@ -544,6 +545,12 @@ The figures, in `assets/`:
     python3 make_figures.py --openmc openmc_reference_results.json \
         --opensn chamber_4g_fine:"4 groups, fine mesh" chamber_64g_coarse:"64 groups, coarse mesh" \
         --sn-only chamber_4g_fine_sn_only.json
+
+Optionally, three-dimensional views of the total flux of one run, made with VisIt 3.5 from the
+`<prefix>_flux.pvtu` file that the collided stage writes: the outer sphere, where the beams of
+the ports arrive, and the three symmetry planes, colored by 4πr² times the total flux:
+
+    visit -nowin -cli -s visit_figures.py --pvtu chamber_4g_fine_flux.pvtu --out assets
 
 ### Running the OpenMC reference
 

@@ -23,6 +23,7 @@ directory:
 | 2 | `sbatch 02_collided.sbatch` | stage 2: collided and total flux, `<prefix>_results.json` |
 | 3 | `sbatch 03_openmc.sbatch` | optional: OpenMC reference with 10 times the histories |
 | 4 | `./04_compare.sh` | comparison with OpenMC and figures |
+| 5 | `./05_visit.sh` | optional: three-dimensional views of the total flux with VisIt |
 
 Stage 1 must be finished before stage 2 starts (`sbatch --dependency=afterok:<job id>`). The
 OpenMC reference does not depend on the OpenSn runs. Without step 3, step 4 uses the committed
