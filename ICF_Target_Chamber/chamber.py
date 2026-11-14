@@ -22,6 +22,10 @@ Stages, selected with the argument stage:
 - "collided": the collided flux, by discrete ordinates, with the first collisions of the
   uncollided flux as its source; the result is the total flux, collided plus uncollided.
   Writes <prefix>_results.json and <prefix>_flux.pvtu.
+
+The JSON files hold the flux and reaction rates in each block, the flux along the line-outs of
+chamber_geometry.line_points, and the flux on a 10 cm (r, z) grid in the half-plane of azimuth
+45 degrees, all per neutron of the whole source and by group.
 - "all" (default): both, one after the other.
 - "sn_only": the same problem by discrete ordinates alone, with the point source of strength
   1/8 in the octant and no uncollided flux, to show the ray effects that the uncollided flux
@@ -34,21 +38,26 @@ Other arguments (opensn --py name=value):
     n_polar, n_azimuthal   Gauss-Legendre-Chebyshev product quadrature (default 6 and 24,
                   144 directions)
     prefix        prefix of the output files (default "chamber_<library>")
+    groupset_size 64 groups only: split the groups without upscattering into groupsets of at
+                  most this many groups (default 0: one groupset); the GMRES vectors of a
+                  groupset are copies of its flux moments, so smaller groupsets need less memory
+    gmres_restart GMRES restart length of the 64-group groupsets (default 10)
 
 For example, on 32 ranks:
 
     mpiexec -n 32 python3 chamber.py --py mesh_file=\\"chamber_fine.msh\\" \\
         --py library=\\"4g_p0\\"
 
-The 4-group P0 library uses one groupset solved by GMRES. The 64-group P3 library uses two
-groupsets, the groups without upscattering and the thermal groups that have it, which share
-one quadrature, each solved by GMRES, in one pass over the groupsets: no neutron goes back
-from the thermal groupset to the first one. Source iteration is not used: with scattering
-ratios up to 0.99 and no diffusion acceleration (the cavity is a void), it converges by about
-5% per iteration on this problem.
+The 4-group P0 library uses one groupset solved by GMRES. The 64-group P3 library uses the
+groups without upscattering (one groupset, or several with groupset_size) and the thermal
+groups that have it, sharing one quadrature, each groupset solved by GMRES. No neutron goes
+back to an earlier groupset, so a pass over the groupsets gives the solution, and a second
+pass confirms it. Source iteration is not used: with scattering ratios up to 0.99 and no
+diffusion acceleration (the cavity is a void), it converges by about 7% per iteration here.
 """
 
 import json
+import math
 import os
 import sys
 import time
@@ -88,6 +97,10 @@ if "stage" not in globals():
     stage = "all"
 if "prefix" not in globals():
     prefix = f"chamber_{library}"
+if "groupset_size" not in globals():
+    groupset_size = 0  # 0: the groups without upscattering form one groupset
+if "gmres_restart" not in globals():
+    gmres_restart = 10
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIBRARY_FILE = os.path.join(HERE, f"materials_{library}.h5")
@@ -153,6 +166,23 @@ def line_values(problem):
     return result
 
 
+def map_values(problem):
+    """Group-wise scalar flux on the (r, z) grid of the OpenMC map, in the half-plane of azimuth
+    45 degrees, z > 0: [z, r, groups]. The cell centres of a 10 cm grid; points outside the
+    outer sphere are 0."""
+    centres = np.arange(5.0, geometry.R_AIR, 10.0)
+    points, inside = [], []
+    for z in centres:
+        for r in centres:
+            inside.append(math.hypot(r, z) < geometry.R_AIR - 1.0e-6)
+            points.append(Vector3(r / math.sqrt(2.0), r / math.sqrt(2.0), z))
+    fluxes = problem.GetScalarFluxFieldFunction()
+    values = FieldFunctionGridBased.GetPointValues(fluxes, points)
+    result = np.array([[v[0] for v in group] for group in values]).T
+    result[~np.array(inside)] = 0.0
+    return result.reshape(len(centres), len(centres), -1)
+
+
 def per_source(entries, scale):
     """Region values or lines as lists, scaled to one neutron of the whole source."""
     return {name: ({k: (v * scale).tolist() for k, v in entry.items()}
@@ -186,6 +216,7 @@ def compute_uncollided(grid, xs_map, num_groups, scattering_order):
     results = {
         "regions": per_source(region_values(problem, num_groups), scale),
         "lines": per_source(line_values(problem), 1.0 / STRENGTH),
+        "map": (map_values(problem) / STRENGTH).tolist(),
         "seconds": solve_seconds, "ranks": size,
     }
     if rank == 0:
@@ -204,16 +235,20 @@ def make_groupsets(num_groups, scattering_order):
                  "inner_linear_method": "petsc_gmres", "gmres_restart_interval": 30,
                  "l_abs_tol": 1.0e-8, "l_max_its": 500}], {}
     cut = first_upscatter_group(num_groups)
-    ranges = [(0, cut - 1), (cut, num_groups - 1)] if 0 < cut < num_groups else \
-        [(0, num_groups - 1)]
+    size_down = groupset_size if groupset_size > 0 else cut
+    ranges = [(first, min(first + size_down, cut) - 1) for first in range(0, cut, size_down)]
+    if cut < num_groups:
+        ranges.append((cut, num_groups - 1))
     # Source iteration converges too slowly here: the within-group scattering ratio reaches 0.93
     # and the void cavity rules out diffusion acceleration. GMRES converges in a few tens of
     # iterations; its Krylov vectors are copies of the groupset's flux moments.
     groupsets = [{"groups_from_to": r, "angular_quadrature": quadrature,
-                  "inner_linear_method": "petsc_gmres", "gmres_restart_interval": 10,
+                  "inner_linear_method": "petsc_gmres", "gmres_restart_interval": gmres_restart,
                   "l_abs_tol": 1.0e-8, "l_max_its": 500} for r in ranges]
-    # No neutron goes from the thermal groupset back to the first one: one pass suffices.
-    return groupsets, {"max_ags_iterations": 1}
+    # No neutron goes from a groupset back to an earlier one, so one pass over the groupsets
+    # gives the solution; a second pass, which starts from it and costs a few iterations,
+    # confirms the convergence.
+    return groupsets, {"max_ags_iterations": 2}
 
 
 def compute_collided(grid, xs_map, num_groups, scattering_order, sn_only=False):
@@ -260,6 +295,7 @@ def compute_collided(grid, xs_map, num_groups, scattering_order, sn_only=False):
         "collided_leakage": collided_leakage * scale,
         "regions": per_source(region_values(problem, num_groups), scale),
         "lines": per_source(line_values(problem), 1.0 / STRENGTH),
+        "map": (map_values(problem) / STRENGTH).tolist(),
         "seconds": solve_seconds, "ranks": size,
         "quadrature": {"n_polar": n_polar, "n_azimuthal": n_azimuthal},
         "groupsets": [list(g["groups_from_to"]) for g in groupsets],
