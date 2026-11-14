@@ -166,12 +166,19 @@ def symmetric_angles(polar, azimuth):
     return sorted({polar, 180.0 - polar}), azimuths
 
 
-def angular_bins(centres, half_width):
-    """Edges of bins of a half-width around sorted centres, in radians, with the gaps."""
-    edges = []
+def angular_bins(centres, half_width, full_range):
+    """Edges, in radians, of bins of a half-width around sorted centres (degrees), with the gaps
+    between them and the bins from 0 to the first and from the last to full_range (degrees).
+
+    The bins of interest are then the odd ones. The grid must cover the whole range: with
+    OpenMC 0.16.0, a tracklength tally on a spherical or cylindrical mesh whose angular grid
+    covers only part of the range misses part of the tracks that enter the mesh from outside
+    that part (about half of the collided flux of the line-outs of this example).
+    """
+    edges = [0.0]
     for centre in centres:
         edges += [centre - half_width, centre + half_width]
-    return np.radians(edges)
+    return np.radians(edges + [full_range])
 
 
 def line_meshes():
@@ -184,16 +191,17 @@ def line_meshes():
         width = LINE_HALF_WIDTH / math.sin(math.radians(polar))
         mesh = openmc.SphericalMesh(
             r_grid=np.arange(0.0, geometry.R_AIR + 0.5 * LINE_DR, LINE_DR),
-            theta_grid=angular_bins(polars, LINE_HALF_WIDTH),
-            phi_grid=angular_bins(azimuths, width), name=f"line_{name}")
+            theta_grid=angular_bins(polars, LINE_HALF_WIDTH, 180.0),
+            phi_grid=angular_bins(azimuths, width, 360.0), name=f"line_{name}")
         meshes[name] = mesh
     polars, azimuths = symmetric_angles(23.5, 45.0)
     upper = np.arange(23.5 - 12.0, 23.5 + 12.0 + 0.5 * ARC_DTHETA, ARC_DTHETA)
-    theta = np.radians(np.concatenate([upper, 180.0 - upper[::-1]]))
+    # theta bins: [0, 11.5], the upper arc, the gap, the lower arc, [168.5, 180]; r bins: from 0.
+    theta = np.radians(np.concatenate([[0.0], upper, 180.0 - upper[::-1], [180.0]]))
     width = LINE_HALF_WIDTH / math.sin(math.radians(23.5))
     meshes["arc"] = openmc.SphericalMesh(
-        r_grid=[ARC_RADIUS - ARC_HALF_THICKNESS, ARC_RADIUS + ARC_HALF_THICKNESS],
-        theta_grid=theta, phi_grid=angular_bins(azimuths, width), name="line_arc")
+        r_grid=[0.0, ARC_RADIUS - ARC_HALF_THICKNESS, ARC_RADIUS + ARC_HALF_THICKNESS],
+        theta_grid=theta, phi_grid=angular_bins(azimuths, width, 360.0), name="line_arc")
     return meshes
 
 
@@ -205,7 +213,7 @@ def map_mesh():
     return openmc.CylindricalMesh(
         r_grid=np.linspace(0.0, geometry.R_AIR, nr + 1),
         z_grid=np.linspace(-geometry.R_AIR, geometry.R_AIR, nz + 1),
-        phi_grid=angular_bins(azimuths, MAP_HALF_WIDTH), name="map")
+        phi_grid=angular_bins(azimuths, MAP_HALF_WIDTH, 360.0), name="map")
 
 
 def source():
@@ -293,14 +301,16 @@ def line_values(samples, mesh, name):
     # OpenMC orders spherical mesh bins with r fastest, then theta, then phi.
     values = samples.reshape(len(samples), nphi, nt, nr).transpose(0, 3, 2, 1)
     values = values / spherical_volumes(mesh)[None]
-    # The bins of the lines are the even ones in theta and phi; the odd ones are the gaps.
-    phis = slice(0, nphi, 2)
+    # The bins of the lines are the odd ones in phi (the others are the gaps).
+    phis = slice(1, nphi, 2)
     if name == "arc":
-        # theta bins: the upper half then the mirrored lower half, both on the arc.
-        upper = values[:, 0, : nt // 2, phis]
-        lower = values[:, 0, nt // 2 + 1:, phis][:, ::-1]
+        # theta bins: [0, 11.5], the upper arc, the gap, the lower arc (mirrored), [168.5, 180];
+        # r bin 1 is the shell of the arc.
+        arc_bins = (nt - 3) // 2
+        upper = values[:, 1, 1:1 + arc_bins, phis]
+        lower = values[:, 1, 2 + arc_bins:2 + 2 * arc_bins, phis][:, ::-1]
         return 0.5 * (upper + lower).mean(axis=2)
-    lines = values[:, :, 0:nt:2, phis]
+    lines = values[:, :, 1:nt:2, phis]
     return lines.mean(axis=(2, 3))
 
 
@@ -347,8 +357,8 @@ def collect(run_dir, batches):
         entry["lines"] = lines
         mesh = map_mesh()
         nr, nphi, nz = len(mesh.r_grid) - 1, len(mesh.phi_grid) - 1, len(mesh.z_grid) - 1
-        # Cylindrical mesh bins: r fastest, then phi, then z. Volumes of the wedges.
-        flux_map = parts["map"][part].reshape(batches, nz, nphi, nr)[:, :, 0::2, :]
+        # Cylindrical mesh bins: r fastest, then phi, then z. The wedges are the odd phi bins.
+        flux_map = parts["map"][part].reshape(batches, nz, nphi, nr)[:, :, 1::2, :]
         r = np.asarray(mesh.r_grid)
         volume = (0.5 * np.diff(r**2) * math.radians(2 * MAP_HALF_WIDTH) * MAP_DZ)
         mean, error = summarize(flux_map.mean(axis=2) / volume[None, None, :])
