@@ -1,0 +1,197 @@
+# Layout of the city in the urban source example.
+#
+# The city is a rectilinear lattice of cells, like the lattice of assemblies in a reactor
+# core. Each cell holds a building, a park, a plaza, or a road. generate_mesh.py meshes the
+# city for OpenSn, and openmc_reference.py builds the same city from analytic surfaces for
+# OpenMC, so both codes always see the same geometry. Edit this file to make a new city, then
+# rerun generate_mesh.py, urban_source.py, and openmc_reference.py. Run generate_xs.py again
+# only if a material is added or changed.
+#
+# All lengths are in meters. x points east and y points north. The ground surface is z = 0.
+
+[domain]
+# Height of the air above the ground surface. It must clear the tallest building.
+air_height = 150.0
+# Thickness of the ground slab below the ground surface. Its bottom is a vacuum boundary.
+ground_depth = 1.0
+
+[lattice]
+# Widths of the lattice columns from west to east, and of the rows from south to north.
+# Here 40 m lots alternate with 12 m streets, and a 6 m half street runs along each edge.
+x_widths = [6.0, 40.0, 12.0, 40.0, 12.0, 40.0, 12.0, 40.0, 6.0]
+y_widths = [6.0, 40.0, 12.0, 40.0, 12.0, 40.0, 12.0, 40.0, 6.0]
+# The rows from north to south, as on a map, with one token per column. A token is a
+# building type followed by the building height in meters (R45 is a type R building 45 m
+# tall), or a ground type: = road, . plaza, P park.
+rows = [
+    "=   =   =   =   =   =   =   =   =",
+    "=  R45  =  C70  =  T25  =  S80  =",
+    "=   =   =   =   =   =   =   =   =",
+    "=  L35  =   P   =  E30  =  W50  =",
+    "=   =   =   =   =   =   =   =   =",
+    "=  S60  =  R20  =   .   =  H40  =",
+    "=   =   =   =   =   =   =   =   =",
+    "=  C30  =  W25  =  L55  =   P   =",
+    "=   =   =   =   =   =   =   =   =",
+]
+
+# Ground types. The ground of a cell, from z = -ground_depth to 0, is one material.
+[ground.road]
+token = "="
+material = "asphalt"
+
+[ground.plaza]
+token = "."
+material = "concrete"
+
+[ground.park]
+token = "P"
+material = "soil"
+
+# Building types. The footprint is centered on its lattice cell, rotated counterclockwise by
+# rotation degrees, and must stay at least 1 m inside the cell. The building stands on the
+# ground of the cell, which is lot_material, and is filled with material from the ground
+# surface to its height. Shapes:
+#   rectangle         width (along x before rotation), depth
+#   circle            radius
+#   ellipse           semi_axes = [along x before rotation, along y before rotation]
+#   regular_polygon   sides, radius (circumradius); a vertex points along +x before rotation
+#   polygon           points = [[x, y], ...] counterclockwise, relative to the cell center
+[buildings.R]
+shape = "rectangle"
+width = 30.0
+depth = 22.0
+
+[buildings.S]
+shape = "rectangle"
+width = 22.0
+depth = 22.0
+
+[buildings.W]
+shape = "rectangle"
+width = 28.0
+depth = 14.0
+rotation = 35.0
+
+[buildings.C]
+shape = "circle"
+radius = 15.0
+
+[buildings.E]
+shape = "ellipse"
+semi_axes = [17.0, 10.0]
+rotation = 30.0
+
+[buildings.H]
+shape = "regular_polygon"
+sides = 6
+radius = 16.0
+
+[buildings.T]
+shape = "polygon"
+points = [[-16.0, -16.0], [16.0, -16.0], [-16.0, 16.0]]
+
+[buildings.L]
+shape = "polygon"
+points = [[-17.0, -17.0], [17.0, -17.0], [17.0, -5.0], [-5.0, -5.0], [-5.0, 17.0],
+          [-17.0, 17.0]]
+
+# Defaults for every building type. A building type can override them.
+[building_defaults]
+rotation = 0.0
+material = "building"
+lot_material = "concrete"
+
+# The source is a point that emits the 661.657 keV gamma ray of Cs-137 (through Ba-137m)
+# isotropically. It sits 1 m above the street between the R20 building and the plaza.
+[source]
+position = [104.0, 78.0, 1.0]
+# Activity of the Cs-137 source, used to convert the results per source photon to dose
+# rates. 0.8510 photons of 661.657 keV are emitted per decay.
+activity_Bq = 3.7e10
+
+# Dose-rate map: boxes on a regular grid over the city, between these heights.
+[dose_map]
+spacing = 4.0
+z_range = [0.5, 1.5]
+
+# Materials. Densities are in g/cm^3 and compositions are elemental weight fractions. Air,
+# asphalt pavement, ordinary concrete, and soil are entries 4, 20, 107, and 116 of the
+# Compendium of Material Composition Data for Radiation Transport Modeling, PNNL-15870,
+# Rev. 2 (2021). The buildings are homogenized: the concrete of the walls and floors is
+# smeared over the whole building, as if it filled 10% of the building volume.
+[materials.air]
+density = 0.001205
+
+[materials.air.weight_fractions]
+C = 0.000124
+N = 0.755268
+O = 0.231781
+Ar = 0.012827
+
+[materials.building]
+density = 0.23
+
+[materials.building.weight_fractions]
+H = 0.022100
+C = 0.002484
+O = 0.574931
+Na = 0.015208
+Mg = 0.001266
+Al = 0.019953
+Si = 0.304627
+K = 0.010045
+Ca = 0.042951
+Fe = 0.006435
+
+[materials.concrete]
+density = 2.3
+
+[materials.concrete.weight_fractions]
+H = 0.022100
+C = 0.002484
+O = 0.574931
+Na = 0.015208
+Mg = 0.001266
+Al = 0.019953
+Si = 0.304627
+K = 0.010045
+Ca = 0.042951
+Fe = 0.006435
+
+[materials.asphalt]
+density = 2.5784
+
+[materials.asphalt.weight_fractions]
+H = 0.007510
+C = 0.106744
+N = 0.000363
+O = 0.424231
+Na = 0.013149
+Mg = 0.031061
+Al = 0.054927
+Si = 0.195830
+P = 0.000448
+S = 0.010764
+K = 0.016001
+Ca = 0.102275
+Ti = 0.003421
+V = 0.000024
+Mn = 0.000427
+Fe = 0.032824
+Ni = 0.000002
+
+[materials.soil]
+density = 1.52
+
+[materials.soil.weight_fractions]
+O = 0.513715
+Na = 0.006140
+Mg = 0.013304
+Al = 0.068564
+Si = 0.271180
+K = 0.014327
+Ca = 0.051166
+Ti = 0.004604
+Mn = 0.000715
+Fe = 0.056285

@@ -25,11 +25,25 @@ TEST_CASES = [
         None,
     ),
     (
-        os.path.join("Urban_Source", "urban_source.py"),
+        # Low-resolution version of the urban source example. The setup run computes the
+        # uncollided flux on one rank, and the case computes the collided flux. Values much
+        # smaller than 1 are printed in scaled units, because the tolerance is also absolute.
+        # Results on 24 and 32 ranks differ by less than 4e-7.
+        os.path.join("Urban_Source", "urban_source_coarse.py"),
+        {
+            "converged:": "yes",
+            "balance-ok:": "yes",
+            "air-dose-x1e-4:": 1.70301402,
+            "air-flux-x1e-3:": 9.68584972,
+            "streets-dose-x1e-1:": 1.59108579,
+            "plaza-dose:": 1.71468075,
+            "building-r20-dose-x1e-1:": 4.74598146,
+            "leakage-x10:": 3.13895556,
+        },
+        32,
+        1.0e-4,
         None,
-        96,
-        None,
-        None,
+        ("urban_source_coarse.py", 1),
     ),
     (
         os.path.join("Kobayashi_Time_Dependent", "kobayashi_td.py"),
@@ -176,8 +190,14 @@ TEST_CASES.extend(load_casl_2d_test_cases())
 TEST_CASES = select_test_cases(TEST_CASES)
 
 
-@pytest.mark.parametrize("input_file, expected, mpi_ranks, rel_tol, extra_check_cmd", TEST_CASES)
-def test_application_output(input_file, expected, mpi_ranks, rel_tol, extra_check_cmd):
+def case_parameters(case):
+    """Return the parameters of a case. The sixth element, a setup run, is optional."""
+    return tuple(case) + (None,) * (6 - len(case))
+
+
+@pytest.mark.parametrize("input_file, expected, mpi_ranks, rel_tol, extra_check_cmd, setup",
+                         [case_parameters(case) for case in TEST_CASES])
+def test_application_output(input_file, expected, mpi_ranks, rel_tol, extra_check_cmd, setup):
     # Ensure OPENSN is set and executable
     assert OPENSN, "OPENSN environment variable must be set"
     assert os.path.isfile(OPENSN) and os.access(OPENSN, os.X_OK), \
@@ -192,6 +212,19 @@ def test_application_output(input_file, expected, mpi_ranks, rel_tol, extra_chec
     # Validate mpi_ranks
     assert isinstance(mpi_ranks, int) and mpi_ranks > 0, \
         f"mpi_ranks must be a positive integer, got {mpi_ranks}"
+
+    # Optional setup run, an (input file, MPI ranks) pair run in the same directory before the
+    # case. Urban_Source, for example, computes the uncollided flux on one rank first.
+    if setup is not None:
+        setup_input, setup_ranks = setup
+        setup_result = subprocess.run(
+            ["mpirun", "-n", str(setup_ranks), OPENSN, "-i", setup_input],
+            cwd=cwd, capture_output=True, text=True)
+        assert setup_result.returncode == 0, (
+            f"Setup run of {setup_input} exited with code {setup_result.returncode}\n"
+            f"stdout:\n{setup_result.stdout}\n"
+            f"stderr:\n{setup_result.stderr}\n"
+        )
 
     # Run opensn
     cmd = ["mpirun", "-n", str(mpi_ranks), OPENSN, "-i", inp]
