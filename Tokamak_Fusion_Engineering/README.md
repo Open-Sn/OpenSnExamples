@@ -433,6 +433,8 @@ with within-group DSA, which halves its cost.
 | --- | --- |
 | [tokamak.py](tokamak.py) | OpenSn input |
 | `tokamak.msh.gz` | Compressed Gmsh mesh |
+| [tokamak_coarse.py](tokamak_coarse.py) | Low-resolution OpenSn input of the weekly regression test |
+| `tokamak_coarse.msh.gz` | Compressed coarse Gmsh mesh of the regression test |
 | `materials_64g_p3.h5` | 64-group P3 macroscopic cross sections in OpenMC format |
 | [openmc_reference.py](openmc_reference.py) | Continuous-energy OpenMC model of the same problem |
 | [generate_xs.py](generate_xs.py) | Script that generates the cross sections with OpenMC |
@@ -442,8 +444,8 @@ with within-group DSA, which halves its cost.
 
 ### Running OpenSn
 
-These results were computed with version `22d12f739c4863ac9f3966010451363effcc2e20` of OpenSn. The
-calculation needs large-scale resources, so it is not part of the automated example tests.
+Run it with OpenSn built from `main`. The calculation needs large-scale resources, so the
+automated example tests run a low-resolution version of it instead.
 
 Run one MPI rank per CPU core:
 

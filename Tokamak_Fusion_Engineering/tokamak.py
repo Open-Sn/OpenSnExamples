@@ -40,9 +40,17 @@ if "opensn_console" not in globals():
 # Set this to True to use the fused GPU sweep on a GPU build.
 use_gpus = False
 
+# The weekly regression test, tokamak_coarse.py, sets these values to run this input on a
+# coarse mesh with fewer directions. The defaults give the results of the README.
+mesh_file = globals().get("mesh_file", "tokamak.msh")
+n_polar = globals().get("n_polar", 6)
+n_azimuthal = globals().get("n_azimuthal", 24)
+apply_wgdsa = globals().get("apply_wgdsa", not use_gpus)
+output_prefix = globals().get("output_prefix", "tokamak")
+
 # Mesh. Rank 0 reads the Gmsh file and distributes the cells to the other ranks.
 grid = DistributedMeshGenerator(
-    inputs=[FromFileMeshGenerator(filename="tokamak.msh")]
+    inputs=[FromFileMeshGenerator(filename=mesh_file)]
 ).Execute()
 
 # Materials. Each block of the mesh gets the macroscopic cross sections of one material
@@ -70,7 +78,8 @@ source = VolumetricSource(block_ids=[1], group_strength=[1.0] + [0.0] * (num_gro
 # angles has 144 directions. It is symmetric about the two reflecting planes. With 288 or
 # 480 directions the first wall, blanket, vessel, and shield results change by less than
 # 0.15%. The coil results, which OpenMC cannot resolve, change by up to 4%.
-quadrature = GLCProductQuadrature3DXYZ(n_polar=6, n_azimuthal=24, scattering_order=3)
+quadrature = GLCProductQuadrature3DXYZ(n_polar=n_polar, n_azimuthal=n_azimuthal,
+                                       scattering_order=3)
 
 # Groupset. All groups are solved together with a Krylov method on one groupset. A tighter
 # tolerance than 1e-8 changes the first wall, blanket, vessel, and shield results by less
@@ -88,7 +97,7 @@ groupset = {
 # roughly halves the solve time. The diffusion solves are inexact, so the preconditioner
 # changes slightly between iterations and needs flexible GMRES. On GPUs the diffusion solves
 # run on the host and make each iteration slower than the iterations they save.
-if not use_gpus:
+if apply_wgdsa:
     groupset.update(
         {
             "inner_linear_method": "petsc_fgmres",
@@ -126,11 +135,12 @@ solver.Execute()
 # planes cancel, so the leakage is the net outflow through the vacuum boundaries.
 balance = solver.ComputeBalanceTable()
 source_rate = balance["production_rate"]
+relative_balance = balance["balance"] / source_rate
+leakage = (balance["outflow_rate"] - balance["inflow_rate"]) / source_rate
 if rank == 0:
     print(f"Converged: {solver.IsConverged()}")
     print(f"Source rate [neutron/s]: {source_rate:.10e}")
-    print(f"Relative balance: {balance['balance'] / source_rate:.3e}")
-    leakage = (balance["outflow_rate"] - balance["inflow_rate"]) / source_rate
+    print(f"Relative balance: {relative_balance:.3e}")
     print(f"Leakage per source neutron: {leakage:.6e}")
 
 # Region-integrated flux [cm] and absorption per source neutron. These are the quantities
@@ -147,6 +157,8 @@ regions = {
     "central_solenoid": 9,
     "exterior": 10,
 }
+# Rank 0 keeps the values for the summary line of tokamak_coarse.py.
+region_results = {}
 if rank == 0:
     print(f"{'Region':18s} {'Flux [cm]':>14s} {'Absorption':>14s}")
 for name, block in regions.items():
@@ -159,7 +171,10 @@ for name, block in regions.items():
     if rank == 0:
         total_flux = flux.GetValue().sum() / source_rate
         total_absorption = absorption.GetValue().sum() / source_rate
+        region_results[name] = {"flux": float(total_flux), "absorption": float(total_absorption)}
         print(f"{name:18s} {total_flux:14.6e} {total_absorption:14.6e}")
 
 # Scalar flux in every group, for visualization in ParaView.
-FieldFunctionGridBased.ExportMultipleToPVTU(problem.GetScalarFluxFieldFunction(), "tokamak_flux")
+FieldFunctionGridBased.ExportMultipleToPVTU(
+    problem.GetScalarFluxFieldFunction(), f"{output_prefix}_flux"
+)

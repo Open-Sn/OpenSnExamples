@@ -545,6 +545,8 @@ small part of the collided flux, is most likely an effect of the angular quadrat
 | --- | --- |
 | [hohlraum.py](hohlraum.py) | OpenSn input, for both stages of the calculation |
 | `hohlraum.msh.gz` | Compressed Gmsh mesh |
+| [hohlraum_coarse.py](hohlraum_coarse.py) | Low-resolution OpenSn input of the weekly regression test |
+| `hohlraum_coarse.msh.gz` | Compressed coarse Gmsh mesh of the regression test |
 | `materials_64g_p3tc.h5` | 64-group transport-corrected P3 cross sections in OpenMC format, used by OpenSn |
 | `materials_64g_p5.h5` | 64-group P5 cross sections without the transport correction |
 | [openmc_reference.py](openmc_reference.py) | Continuous-energy OpenMC model of the same problem |
@@ -558,10 +560,8 @@ small part of the collided flux, is most likely an effect of the angular quadrat
 
 ### Running OpenSn
 
-These results were computed with OpenSn 1.0.1, built from `main` with the fix for
-uncollided rays that graze cell edges, which the first stage needs on this mesh. The
-calculation needs large-scale resources, so it is not part of the automated example
-tests.
+Run it with OpenSn built from `main`. The calculation needs large-scale resources, so the
+automated example tests run a low-resolution version of it instead.
 
 Run the first stage on one MPI rank, with threads, and the second stage on many ranks:
 

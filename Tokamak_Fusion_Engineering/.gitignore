@@ -3,3 +3,7 @@ tokamak.msh
 tokamak_flux*.pvtu
 tokamak_flux*.vtu
 openmc_seed*/
+tokamak_coarse.msh
+tokamak_coarse.msh.part
+tokamak_coarse_flux*.pvtu
+tokamak_coarse_flux*.vtu
