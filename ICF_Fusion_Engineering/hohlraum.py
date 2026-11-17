@@ -58,14 +58,21 @@ if "opensn_console" not in globals():
     from pyopensn.source import PointSource
     from pyopensn.xs import MultiGroupXS
 
-uncollided_file = "hohlraum_uncollided.h5"
-uncollided_results = "hohlraum_uncollided.json"
+# The weekly regression test, hohlraum_coarse.py, sets these values to run this input on a
+# coarse mesh with fewer directions. The defaults give the results of the README.
+mesh_file = globals().get("mesh_file", "hohlraum.msh")
+n_polar = globals().get("n_polar", 16)
+n_azimuthal = globals().get("n_azimuthal", 64)
+output_prefix = globals().get("output_prefix", "hohlraum")
+
+uncollided_file = f"{output_prefix}_uncollided.h5"
+uncollided_results = f"{output_prefix}_uncollided.json"
 num_groups = 64
 scattering_order = 3
 
 # Mesh. Rank 0 reads the Gmsh file and distributes the cells to the other ranks.
 grid = DistributedMeshGenerator(
-    inputs=[FromFileMeshGenerator(filename="hohlraum.msh")]
+    inputs=[FromFileMeshGenerator(filename=mesh_file)]
 ).Execute()
 
 # Materials. Each block gets the macroscopic cross sections of one material from the
@@ -125,7 +132,7 @@ def compute_uncollided():
         json.dump({name: {k: v.tolist() for k, v in entry.items()}
                    for name, entry in values.items()}, stream)
     flux = problem.GetScalarFluxFieldFunction()
-    FieldFunctionGridBased.ExportMultipleToPVTU([flux[0]], "hohlraum_uncollided")
+    FieldFunctionGridBased.ExportMultipleToPVTU([flux[0]], f"{output_prefix}_uncollided")
     print(f"Wrote {uncollided_file}. Run this input again, on any number of ranks, "
           "to compute the collided flux.")
 
@@ -141,7 +148,7 @@ def compute_collided():
     # comes mostly from neutrons that scattered in the same thin layer and travel nearly
     # parallel to it. These grazing directions converge slowly with the number of polar
     # angles.
-    quadrature = GLCProductQuadrature3DXYZ(n_polar=16, n_azimuthal=64,
+    quadrature = GLCProductQuadrature3DXYZ(n_polar=n_polar, n_azimuthal=n_azimuthal,
                                            scattering_order=scattering_order)
 
     # All groups are solved together on one groupset by source iteration. Only 0.3% of the
@@ -196,6 +203,7 @@ def compute_collided():
             row = [entry["flux"].sum(), collided] + [entry[k].sum() for k in reactions]
             print(f"{name:14s} " + " ".join(f"{v / source_rate:13.6e}" for v in row))
         results = {
+            "converged": bool(solver.IsConverged()),
             "source_rate": source_rate,
             "balance": {k: float(v) for k, v in balance.items()},
             "leakage_groups": (leakage / source_rate).tolist(),
@@ -205,12 +213,12 @@ def compute_collided():
             "uncollided": {name: {k: v.tolist() for k, v in entry.items()}
                            for name, entry in uncollided.items()},
         }
-        with open("hohlraum_results.json", "w") as stream:
+        with open(f"{output_prefix}_results.json", "w") as stream:
             json.dump(results, stream)
 
     # Scalar flux in every group, for visualization in ParaView.
     FieldFunctionGridBased.ExportMultipleToPVTU(problem.GetScalarFluxFieldFunction(),
-                                                "hohlraum_flux")
+                                                f"{output_prefix}_flux")
 
 
 if os.path.exists(uncollided_file) and os.path.exists(uncollided_results):

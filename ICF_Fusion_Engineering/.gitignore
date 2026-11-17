@@ -10,3 +10,12 @@ hohlraum_results.json
 uncollided_reference.json
 openmc_seed*/
 xs_generation/
+hohlraum_coarse.msh
+hohlraum_coarse.msh.part
+hohlraum_coarse_uncollided.h5
+hohlraum_coarse_uncollided.json
+hohlraum_coarse_uncollided*.pvtu
+hohlraum_coarse_uncollided*.vtu
+hohlraum_coarse_flux*.pvtu
+hohlraum_coarse_flux*.vtu
+hohlraum_coarse_results.json

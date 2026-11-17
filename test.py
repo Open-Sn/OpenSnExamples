@@ -56,6 +56,48 @@ TEST_CASES = [
         ],
     ),
     (
+        # Low-resolution version of the tokamak example. Values much smaller than 1 are printed
+        # in scaled units, because the tolerance is also absolute. At the iteration tolerance of
+        # 1e-8 the deep regions can still change by about 1e-4, so the tolerance is 1e-3 and the
+        # absorption in the shield and the flux in the coils are not compared.
+        os.path.join("Tokamak_Fusion_Engineering", "tokamak_coarse.py"),
+        {
+            "converged:": "yes",
+            "balance-ok:": "yes",
+            "first-wall-flux:": 136.764713,
+            "first-wall-absorption:": 1.3588459,
+            "blanket-flux:": 23.1514675,
+            "vessel-flux-x1e2:": 2.31695402,
+            "shield-flux-x1e3:": 1.61001363,
+            "leakage-x1e7:": 8.95543276,
+        },
+        32,
+        1.0e-3,
+        None,
+    ),
+    (
+        # Low-resolution version of the hohlraum example, both stages on one rank. Values much
+        # smaller than 1 are printed in scaled units, because the tolerance is also absolute. The
+        # iteration error of the collided flux is about 1e-7, well below the tolerance of 1e-4.
+        os.path.join("ICF_Fusion_Engineering", "hohlraum_coarse.py"),
+        {
+            "converged:": "yes",
+            "balance-ok:": "yes",
+            "leakage-excess-x1e4:": 5.72885223,
+            "fill-gas-flux-x10:": 2.5020275,
+            "wall-flux-x1e3:": 5.72050201,
+            "tmp-flux-x1e2:": 1.14940864,
+            "wall-collided-flux-x1e5:": 3.04444356,
+            "tmp-collided-flux-x1e5:": 6.06448986,
+            "exterior-collided-flux-x1e4:": 1.59048201,
+            "wall-n2n-x1e4:": 7.16725596,
+            "tmp-absorption-x1e4:": 1.46897176,
+        },
+        1,
+        1.0e-4,
+        None,
+    ),
+    (
         os.path.join("Six_1g_spherical_benchmarks", "Problem_1.py"),
         {"end-radius:": 1.00, "avg-value:": 8.212354},
         12,

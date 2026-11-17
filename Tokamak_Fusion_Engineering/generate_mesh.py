@@ -14,6 +14,11 @@ with Gmsh 4.15.2 and takes several minutes to generate. Another Gmsh version can
 different mesh.
 
     python3 generate_mesh.py --output tokamak.msh
+
+The --coarse option makes the mesh of the weekly regression test, with 130,046 tetrahedra.
+The supplied tokamak_coarse.msh.gz was made with Gmsh 4.15.2:
+
+    python3 generate_mesh.py --coarse --output tokamak_coarse.msh
 """
 
 import argparse
@@ -42,8 +47,22 @@ QUARTER = math.pi / 2
 # and shield (6), and the maximum element size in each block.
 LAYER_WIDTHS = {3: 1.0, 4: 2.0, 5: 2.0, 6: 2.0}
 MAX_SIZE = 90.0
+MIN_SIZE = 2.0
+# Number of elements per 2 pi of curvature.
+CURVATURE_ELEMENTS = 32
 BLOCK_SIZES = {1: 60.0, 2: 50.0, 3: 35.0, 4: 40.0, 5: 35.0, 6: 40.0,
                7: 25.0, 8: 12.0, 9: 30.0, 10: MAX_SIZE}
+
+# The coarse mesh of the weekly regression test, tokamak_coarse.msh, has thicker layers in
+# blocks 3 to 6, twice the element sizes of blocks 1 to 9, a minimum size of 6, a maximum
+# size of 200, and 12 elements per 2 pi of curvature. With a single layer in each of these
+# blocks, the flux in the vessel and shield is negative. With coarser element sizes, Gmsh
+# fails to recover the boundary.
+COARSE_LAYER_WIDTHS = {3: 3.0, 4: 6.0, 5: 4.0, 6: 4.0}
+COARSE_SIZE_FACTOR = 2.0
+COARSE_MIN_SIZE = 6.0
+COARSE_MAX_SIZE = 200.0
+COARSE_CURVATURE_ELEMENTS = 12
 
 # Boundary IDs and names of the upper half. The midplane (102) becomes interior and the
 # mirrored top becomes VACUUM_BOTTOM (105).
@@ -195,9 +214,9 @@ def mesh_upper_half(groups, filename):
     gmsh.model.mesh.setSizeCallback(
         lambda dim, tag, x, y, z, lc: min(lc, entity_sizes.get((dim, tag), MAX_SIZE)))
     gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", -2)
-    gmsh.option.setNumber("Mesh.MeshSizeMin", 2.0)
+    gmsh.option.setNumber("Mesh.MeshSizeMin", MIN_SIZE)
     gmsh.option.setNumber("Mesh.MeshSizeMax", MAX_SIZE)
-    gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 32)
+    gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", CURVATURE_ELEMENTS)
     gmsh.option.setNumber("Mesh.Algorithm3D", 1)
     gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
     gmsh.option.setNumber("Mesh.Binary", 0)
@@ -255,7 +274,18 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--output", type=Path, default=Path("tokamak.msh"))
+    parser.add_argument("--coarse", action="store_true",
+                        help="make the coarse mesh of the weekly regression test")
     args = parser.parse_args()
+    if args.coarse:
+        global MIN_SIZE, MAX_SIZE, CURVATURE_ELEMENTS
+        LAYER_WIDTHS.update(COARSE_LAYER_WIDTHS)
+        MIN_SIZE = COARSE_MIN_SIZE
+        MAX_SIZE = COARSE_MAX_SIZE
+        CURVATURE_ELEMENTS = COARSE_CURVATURE_ELEMENTS
+        BLOCK_SIZES.update({block: COARSE_SIZE_FACTOR * size
+                            for block, size in BLOCK_SIZES.items() if block != 10})
+        BLOCK_SIZES[10] = MAX_SIZE
     if args.output.exists():
         raise FileExistsError(f"{args.output} exists. Remove it or choose another name.")
     with tempfile.TemporaryDirectory() as scratch:
