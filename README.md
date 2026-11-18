@@ -25,6 +25,9 @@ A short description of each example is given below:
 - [ICF Fusion Engineering](./ICF_Fusion_Engineering/README.md):
     3D 64-group uncollided-flux calculation of a DT point source in an indirect-drive
     ICF hohlraum compared with continuous-energy OpenMC
+- [ICF Target Chamber](./ICF_Target_Chamber/README.md):
+    3D uncollided and collided flux of a 14.1 MeV point source in a NIF-like target
+    chamber with 52 open ports, 4 and 64 groups, compared with continuous-energy OpenMC
 - [Coiled Wire Electron-Photon](./Coiled_Wire_Electron_Photon/README.md):
     3D coupled photon-electron CSDA transport in an insulated copper coil, with
     energy and charge deposition and an OpenMC photon comparison
