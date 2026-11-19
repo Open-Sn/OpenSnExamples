@@ -1,0 +1,206 @@
+{
+  "created_utc": "2026-11-13T17:00:39.207104+00:00",
+  "library_sha256": "32bc7ec025f07470f1ce6e4e392a4766cd586bbb2a48ac68cc0a2bfc92cb214b",
+  "generator_sha256": {
+    "generate_xs.py": "805bb5e62103f59ae180f7fe2e48ef6b08fca825eb8056bfbdc8c0a66f557515",
+    "openmc_reference.py": "bfc64aa9ff4816e9f63a4ee37ddfb0b966408c349de0abfffd45334919d4e16e",
+    "city.py": "76be1278a2371707b69d6d0122c0c8a4302bef68a4d957dd595fbe433b1ce7b7"
+  },
+  "layout_sha256": "2a97622f4443d774d2e39602988c546b0037ac4d5a92139f21a16bd38e16d006",
+  "openmc_python_version": "0.16.0",
+  "openmc_executable_version": "OpenMC version 0.16.0\nCommit hash: 617d35a5063c57796b43428bc401e627d2011046\nCopyright (c) 2011-2026 MIT, UChicago Argonne LLC, and contributors\nMIT/X license at <https://docs.openmc.org/en/latest/license.html>\nBuild type:            Release\nCompiler ID:           GNU 15.3.0\nMPI enabled:           no\nParallel HDF5 enabled: no\nPNG support:           yes\nDAGMC support:         yes\nlibMesh support:       no\nCoverage testing:      no\nProfiling flags:       no\nUWUW support:          no\nStrict FP:             no",
+  "nuclear_data": {
+    "library": "ENDF/B-VIII.0 HDF5 library distributed by the OpenMC project",
+    "files_sha256": {
+      "neutron/Al27.h5": "f766ee2568ecac47546ed1ae61d9907df2aceb7cd6dcc7eb2930df935d94e805",
+      "neutron/Ar36.h5": "cb9cc9c09f8d5d8050c74bc582164493bd5e64eeee4692044325c62d887b38ae",
+      "neutron/Ar38.h5": "c4afa9d3bcda6a39fb7a9015b65f30571fb71150692111239a69878aa58d0802",
+      "neutron/Ar40.h5": "10d6e347e4788d3222215386541c1fefcfc0a367c49ad1d783c401bb32190deb",
+      "neutron/C12.h5": "80a09447abf9820a53344ba0678f92bd497ba0e6a076b022a7f74ed3d7256905",
+      "neutron/C13.h5": "d28169a1eacea95062b662afc493fb99b6dba947a028188eca29555ae55924da",
+      "neutron/Ca40.h5": "4b9eea1094328c16ab12df33c26bb228d3fe120e4bb00437a49973b813858b4b",
+      "neutron/Ca42.h5": "5c20d351c797f87eccf21674f8081249ee33705367e6751085c964e85480df98",
+      "neutron/Ca43.h5": "8250c89ed300b29ea729c07bb1b148c951e567e0e6c07d33c866df8ebc54e7ca",
+      "neutron/Ca44.h5": "103520b26296911f128bf2e8a8201f6488cf4b05b3f364f52b464b01b1aaf76a",
+      "neutron/Ca46.h5": "cbc3ceb9b8e22c6cb07f3159c4b70b7458111fccc059e05c16b7db3135b44488",
+      "neutron/Ca48.h5": "98dd5bbe1d260c3f7e8f5b4447070636c9558219f37f4b5b14fd443f51bbfe53",
+      "neutron/Fe54.h5": "9342a61e06c94428ff860e9d3e35179575897da9036cbbbb9312f4224b879b65",
+      "neutron/Fe56.h5": "afda738f1ce679b7c528ecf12414c5a3dc3b34dd1e9f5db7f4573c89f3a40fd4",
+      "neutron/Fe57.h5": "db2c4825ba74f476c1a839e4c5df283f61fc56a8cf28ad157307111c02a90ddd",
+      "neutron/Fe58.h5": "c71d1d63304b50f5cf1400afc9eda5185596645d6e9d6d730f89da5a3f2419dd",
+      "neutron/H1.h5": "5252b5e931c7d5aa6bab34867e77b158b9d3dafbf99ecd5c6758379955eebe2b",
+      "neutron/H2.h5": "19f42e5e94ed5c4bf84cc90b78b8c34fc74f7cab86f80799cf93f430f1f44e8d",
+      "neutron/K39.h5": "9fdfc2f24e2ae9746e8ec4ac85f7524b75e55ada1eb3295500dbaf20f6cbcb5c",
+      "neutron/K40.h5": "45c032749efaaaf26f0d85a1485ce4c92085323eb61d4d2a17e7950329d2dc27",
+      "neutron/K41.h5": "241ceeacd602d51553ac09b87865e7d0627b25f3df17f928309d902835dd7090",
+      "neutron/Mg24.h5": "4ed8c4cb7a076edda08b3879993e2cff1e1e59b3136b3cbd3b0d5e84a42120c7",
+      "neutron/Mg25.h5": "b5062041e42ec9f5995cdfa03386ae531af5973d38bcb5b685b286ca87698395",
+      "neutron/Mg26.h5": "30e6e2ae021486cd5ed7002f75335aa67bd2cf439f27801cc5eef63750c8498f",
+      "neutron/Mn55.h5": "7549ee76eace4500d80cce1718b47bc2c6c0c89334174217f5c93ba2e7c27c95",
+      "neutron/N14.h5": "d2684f2a0dff452273a9e57cb53cec6bf50ad111d4e226087deaa5763a468451",
+      "neutron/N15.h5": "e0e64aacaf1a8e8ee3e140cf3c475d9ade635bd6497e432145387a0c730106ad",
+      "neutron/Na23.h5": "4c75b630a8f3139b86068a3e4b993bcb287b79b6f3083c0e6355f0b79292b9ce",
+      "neutron/Ni58.h5": "10c772abd1af2d7e2dcae654a5b79da77bf55ffb851f301a4a6ea36a88b5ce3a",
+      "neutron/Ni60.h5": "da31e87805eb01494d1d74f26b9ac653f7266b2a5c340683b0e8a363f1bb6fb1",
+      "neutron/Ni61.h5": "44b889aee0299e74cf457a25182706c42e8428d2fe7c74ee91f7ecf147c4757f",
+      "neutron/Ni62.h5": "6b8fadfe88c9471a94ed8027633863ff16998699adee315556a6f65caffe8d1a",
+      "neutron/Ni64.h5": "a0173bf80d22cbf9acaf5c5593279fa52f63598724c195d07226e60fa304c036",
+      "neutron/O16.h5": "161ce942105208ed6a45ce4b94fc0eeb842aa1083193af3a3cd280d149d4159e",
+      "neutron/O17.h5": "5a00a43fbfe210f5be27a2ac0d0d3182fdddfe26c08c7044e6ad49d605970448",
+      "neutron/O18.h5": "6bdf5e9415405934ae6be42b6905d35bbc46da3665938983efd99ebc0c0715c2",
+      "neutron/P31.h5": "e61dab94a466e122fe491a9a8692a53cfeeea5831534d395022355d24897310a",
+      "neutron/S32.h5": "cc6a122e512e3d63841d882f9d3c0e653b3cc2ba40887c466eadf8a33bb9bb60",
+      "neutron/S33.h5": "261d8a1a0a7a5aa0817fc258c1258304e103a47b5b72b13acf2adcf2fda3d618",
+      "neutron/S34.h5": "8364d70ed1f64a14163f274a0385e27f00f278c29ad45592a835277fbff75b6f",
+      "neutron/S36.h5": "e2be96a958fa36615b1c7714d1df428b7302c125871b151df0a1451806db8517",
+      "neutron/Si28.h5": "421f5da8ed6630273d3959cbecb18b369ca1d01346a48e861fb635e3522f0267",
+      "neutron/Si29.h5": "e1a16f7b87769e728271dc75939ced9cfba598d218b5e0ffbb0649a0e6c1c38f",
+      "neutron/Si30.h5": "170edd3756451dc8704fd9faee901297108eaae711c9a2856c74b5013908ff0a",
+      "neutron/Ti46.h5": "12e4bdec24321b986a1295bd7385adc70b803471ecddcaa682ffa9f5812b8e87",
+      "neutron/Ti47.h5": "e1fea2e5213addba30286023fb696fbb0340bdf4dc6be7aacb936c0a29e39f3a",
+      "neutron/Ti48.h5": "1bb10bf790624ebec107e7bc0844fe319302e82112e7db7dfbeea14be280eb52",
+      "neutron/Ti49.h5": "6a7981d1e08e458596f84cc46af6d573a9bcfaea0b078031c9603d95daf471d8",
+      "neutron/Ti50.h5": "95c3934e05bd470aabeb0a8989e1cc13b21f924084a6653bc427da60a81d3f72",
+      "neutron/V50.h5": "22e539962c647694f202b7b9fc23bb0f849cf234be5102b29baf7437e801a1c8",
+      "neutron/V51.h5": "99fdac920eba2264bdba270fde78ea56d26ac11ef28a91cb2cbc0bd853e01322",
+      "photon/Al.h5": "746110d2c6c0a8fb81e269ec84c5ccc69e785346de0272d9827a57a391905f34",
+      "photon/Ar.h5": "bf908a829d9d64389b7d5d810d8eda1cda4d47325c0a5f91823b07209e556bde",
+      "photon/C.h5": "5a70a4a9668d1fd27ad4c08f710ff5c80773700b4a7f3b84d8638f82f6af6c58",
+      "photon/Ca.h5": "1b55b19b11f8fcbb8f669d911d0ee657136fc1b552cdc83ba4381c5988905730",
+      "photon/Fe.h5": "5974bee28e7539777fd8456598e2c7dbbd6987b4f5a781e326a1bf792ede5fa2",
+      "photon/H.h5": "867dd10b38817185ee27b2ac3d262adb5540da6f585c16c204a9e9d758f06c6b",
+      "photon/K.h5": "36af0e8a7129e451133cf4bcf136ef8749fb60be1271c9b2550a63274407ca47",
+      "photon/Mg.h5": "15aeeb0897a1cc406fdbfa0691fa9693cc80815fde5adef3718208128b79aac2",
+      "photon/Mn.h5": "5268e3123c298e213e1dd02d46afba2edb8572027ab6c2be3c4ffd688c0772ff",
+      "photon/N.h5": "e74ae4cb93135a10b6911ea7544f38b843edb579b3e391ee6839ce19f41900c0",
+      "photon/Na.h5": "a421e14f5fd8e29f97c93c5672359ddb276f9cdf467b58b1184ed7035b997c96",
+      "photon/Ni.h5": "cc4a4ee537e64a4409ae8d9d056b4cf6e648d16687e0a6257913a6a592537bed",
+      "photon/O.h5": "ca6d0db0f9a094c637ff0f9d2b7e89655df987f2785704744f6be92efd3d34db",
+      "photon/P.h5": "41c59d3ac9aae9e8451c04b71bee9af7349a2ae50c1f6ce695029ecd206630d1",
+      "photon/S.h5": "1c5f4002db0f72ef0c1f4458ced815f67dabfd4fc90fd97edd13d22729b73597",
+      "photon/Si.h5": "ac4484e46bc907b4d66772792379dc81f82de0b421e6648534ccd16d56df9ae5",
+      "photon/Ti.h5": "f1cd166aebef1d23b07655efc617e8bdefbe3d3799f39f982f107e158a61ca81",
+      "photon/V.h5": "0a438474972c341d56cfe037879098cb79a5ad025fdc32ac543e875fb10ece39"
+    }
+  },
+  "settings": {
+    "group_edges_eV": [
+      10000.0,
+      11899.756002389177,
+      14160.419291639722,
+      16850.553446203692,
+      20051.7474515042,
+      23861.0902094429,
+      28394.115144336778,
+      33788.304212135095,
+      40207.25758589061,
+      47845.65547973095,
+      56935.16259831718,
+      67751.45428763286,
+      80622.5774829855,
+      95938.90003312433,
+      114164.95015317864,
+      135853.50508477457,
+      161662.35625781547,
+      192374.2594239317,
+      228920.67482851038,
+      272410.01743615477,
+      324161.2740096816,
+      385744.0066138839,
+      459025.95580892055,
+      546229.6872889631,
+      650000.0,
+      670000.0
+    ],
+    "legendre_order": 7,
+    "photon_cutoff_eV": 10000.0,
+    "electron_treatment": "led",
+    "source_energy_eV": 661657.0,
+    "smooth_source_fraction": 0.01,
+    "cube_side_cm": 10000000.0,
+    "dose_coefficients": {
+      "dose_ap": "ICRP 116 effective dose, AP, log-log, weighted by the infinite-medium flux in air",
+      "dose_iso": "ICRP 116 effective dose, ISO, log-log, weighted by the infinite-medium flux in air"
+    },
+    "particles_per_batch": 1000000,
+    "batches": 100,
+    "seeds": {
+      "air": 11,
+      "building": 12,
+      "concrete": 13,
+      "asphalt": 14,
+      "soil": 15
+    },
+    "mpi_processes": 1,
+    "threads_per_process": 32
+  },
+  "inputs_sha256": {
+    "air": {
+      "geometry.xml": "47243258b8aebb6c257412ad731390c8ecb0ba59065ad392c097acccdb20f16e",
+      "materials.xml": "f5a7c175413723cd8f2e099563e75c9da89626f9a529765b602da518b1ae1490",
+      "settings.xml": "c72c17aa018139310e2048516adb9de7c07771a887630bb080a4a4ede7d58a6e",
+      "tallies.xml": "de39b543a88a829873b0dcfac0fd20c14387717e758009c8b322fb2a2bf21889",
+      "statepoint": "ed87ca3d1e2045e3305a8b180788558a3267ae27fe89f57f90f6f159c4e4eec0"
+    },
+    "building": {
+      "geometry.xml": "368924b14a4779292c9baa9f63af3b309759218c4d6d35e7bc0c978d0ef5604b",
+      "materials.xml": "2eb5c01650b9a72b980b1c0be3a10ab619c74d068aaf12de01d5a5a4826bee62",
+      "settings.xml": "d1bd6947568a6cc1e87f896c88f71c51c8c7e72158819ed868bcc84ef7e0761a",
+      "tallies.xml": "bed76bcb2c1032f015bd8dc6a09a9557006ed1010545b6abc805897a1e348191",
+      "statepoint": "53582a46ef4153fea951a5e727587205d9b11799dbb0467bb79575eb2c48f1f6"
+    },
+    "concrete": {
+      "geometry.xml": "37b509211e9d450b5c5d7cb651f78bada03d81761fea6165efdf6cbac798bde9",
+      "materials.xml": "1131f61b8acfe6d28004c3d8e2c609be28917ee123a3025c57265a4f66b72979",
+      "settings.xml": "24b4c8ccd67913d0ddff4f2602978fa354046f83979f62caa4da5e9c17e7dea7",
+      "tallies.xml": "a03a0228b49ca64387c1082f0bf0871ad6481d5ecb020a73066039071fefc3fd",
+      "statepoint": "f1af7e4516178d83a762af5742a05fde5f42c42f1c04276468e97eb1af86251d"
+    },
+    "asphalt": {
+      "geometry.xml": "ef21cacb6564f99ecce8fb7cfd1827b61529664095f6dbf6e4c9365b273f12d5",
+      "materials.xml": "cda3817891c13c97a7b896ccded34b12af7bd9efebb65248d6cb636df57553d6",
+      "settings.xml": "4aaf9fa075363e1e0260ba6a36b4dde726437fb3529bcd4db5a3eb89530aa9de",
+      "tallies.xml": "e1de38a2667c16ed19393c1b67284413fb1962483d0c5fd2d1dac2cfd41793cf",
+      "statepoint": "513ca40973f7982306a8bdb964c722e9ba8b3a7c41c08e06e2e50ffa23d8ce85"
+    },
+    "soil": {
+      "geometry.xml": "2ccc1d4509f167dd3f3a551370575ce94da9c82d888904f7c9486b928fa4f958",
+      "materials.xml": "067607ac3e9bc6a1ee9cef6a5dde7558aade17da437d2736e8d96bc054133638",
+      "settings.xml": "4eef96653e99268298bf78b8da8d4084b2dbe8638492df1b14cf954bd15fba0e",
+      "tallies.xml": "b88706736498563cd154f3f645fda820f04d7029b49b0dd4739b859376aa7fec",
+      "statepoint": "4f58609dfe2fbaa205d82de3643d1649de6961dbb3088e58576c7e51b1fff000"
+    }
+  },
+  "materials": {
+    "air": {
+      "total_relative_std_dev_max": 0.0076367980321977655,
+      "total_relative_std_dev_median": 0.00021929600304686114,
+      "scatter_below_structure_max": 0.004114395451764499,
+      "total_closure_max": 7.64900121592855e-15
+    },
+    "building": {
+      "total_relative_std_dev_max": 0.008256086228767268,
+      "total_relative_std_dev_median": 0.00026728588471135233,
+      "scatter_below_structure_max": 0.0012068796100746337,
+      "total_closure_max": 9.391979837507867e-15
+    },
+    "concrete": {
+      "total_relative_std_dev_max": 0.0074749886395545995,
+      "total_relative_std_dev_median": 0.0002781981924482191,
+      "scatter_below_structure_max": 0.0009141329257432074,
+      "total_closure_max": 6.7366080326549895e-15
+    },
+    "asphalt": {
+      "total_relative_std_dev_max": 0.007374109025997126,
+      "total_relative_std_dev_median": 0.000258915842728063,
+      "scatter_below_structure_max": 0.0007252034617290708,
+      "total_closure_max": 6.166313587858988e-15
+    },
+    "soil": {
+      "total_relative_std_dev_max": 0.007202224400472961,
+      "total_relative_std_dev_median": 0.0002655403419840214,
+      "scatter_below_structure_max": 0.0006311553105201445,
+      "total_closure_max": 5.072010807401153e-15
+    }
+  }
+}
