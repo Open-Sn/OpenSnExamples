@@ -20,10 +20,12 @@ not exist and the second stage otherwise:
     gunzip -k urban_source.msh.gz
     OPENSN_NUM_THREADS=32 opensn -i urban_source.py
     export OPENSN_NUM_THREADS=1
-    mpirun -n 24 opensn -i urban_source.py
+    mpirun -n 960 opensn -i urban_source.py
 
-With the supplied mesh and the default settings, the first stage takes a few minutes on 32
-threads, and the second stage about 85 minutes on 24 ranks with 230 GB of memory.
+With the supplied mesh and the default settings, the first stage takes about 5 minutes on 32
+threads. The second stage, with 3,168 directions, took 48 minutes on 960 ranks with 940 GB
+of memory. With -p "sldfesq_level=1" -p "horizon_refinements=1" (576 directions), it runs on
+one node with 24 ranks and 230 GB.
 
 The settings below can be changed without editing this file with the -p option of the
 console, for example -p "scattering_order=5". Use the same mesh_file, library,
@@ -70,13 +72,13 @@ scattering_order = globals().get("scattering_order", 3)
 # Angular quadrature for the collided flux: "sldfesq", the piecewise-linear quadrature of
 # the given level whose directions within horizon_cone_deg of the horizon are refined
 # horizon_refinements times, or "glc", the Gauss-Legendre-Chebyshev product quadrature with
-# n_polar x n_azimuthal directions. The default, level 1 refined once within 10 degrees of
-# the horizon, has 576 directions.
+# n_polar x n_azimuthal directions. The default, level 2 refined twice within 10 degrees of
+# the horizon, has 3,168 directions.
 quadrature_type = globals().get("quadrature_type", "sldfesq")
 n_polar = globals().get("n_polar", 8)
 n_azimuthal = globals().get("n_azimuthal", 32)
-sldfesq_level = globals().get("sldfesq_level", 1)
-horizon_refinements = globals().get("horizon_refinements", 1)
+sldfesq_level = globals().get("sldfesq_level", 2)
+horizon_refinements = globals().get("horizon_refinements", 2)
 horizon_cone_deg = globals().get("horizon_cone_deg", 10.0)
 groups_per_groupset = globals().get("groups_per_groupset", 5)
 tolerance = globals().get("tolerance", 1.0e-7)
@@ -87,6 +89,10 @@ gmres_restart_interval = globals().get("gmres_restart_interval", 5)
 # traced. The default, 0, ray traces it in the whole domain.
 near_source_half_width = globals().get("near_source_half_width", 0.0)
 prefix = globals().get("prefix", "urban_source")
+# Largest number of sweep sends a rank keeps posted, 0 for no limit. Set it on networks that run
+# out of rendezvous resources with many ranks and directions, such as Slingshot. It does not
+# change the solution.
+max_mpi_outstanding_sends = globals().get("max_mpi_outstanding_sends", 0)
 settings = {"mesh_file": mesh_file, "library": library, "scattering_order": scattering_order,
             "quadrature_type": quadrature_type, "n_polar": n_polar,
             "n_azimuthal": n_azimuthal, "sldfesq_level": sldfesq_level,
@@ -242,6 +248,8 @@ def compute_collided():
         groupsets=groupsets,
         xs_map=xs_map,
         uncollided_flux=uncollided_file,
+        options=({"max_mpi_outstanding_sends": max_mpi_outstanding_sends}
+                 if max_mpi_outstanding_sends > 0 else {}),
     )
     solver = SteadyStateSourceSolver(problem=problem)
     solver.Initialize()

@@ -21,11 +21,15 @@ compared with a continuous-energy OpenMC calculation of the same city, materials
 The main findings are:
 
 - The total dose in the air agrees with OpenMC to 0.13%, and the collided flux in the air
-  to 0.48%. The leakage from the city agrees to 0.37%.
-- On the dose-rate map 1 m above the ground, the median difference from OpenMC is 1.7% in
-  the boxes that see the source and 3.2% in the shadows of the buildings, and the mean
-  differences are +0.17% and -0.37%. The remaining differences are ray effects of the
-  collided flux, in streaks of alternating sign along the directions of the quadrature.
+  to 0.46%. The leakage from the city agrees to 0.44%.
+- On the dose-rate map 1 m above the ground, the median difference from OpenMC is 1.0% in
+  the boxes that see the source and 2.4% in the shadows of the buildings, and the mean
+  differences are +0.32% and +0.30%. In the boxes that see the source, the RMS difference
+  is 1.6% beyond the statistical error of OpenMC.
+- The collided flux is computed with 3,168 directions, refined near the horizon. With 576
+  directions, ray effects of the collided flux made streaks of alternating sign on the dose
+  map. The 3,168 directions halve them: the 95th percentile of the difference of the
+  collided dose in the boxes that see the source falls from 21% to 11%.
 - The uncollided flux agrees with semi-analytic integrals to 0.03% in the air and the
   streets. In the buildings and the plaza, the uncollided flux of OpenSn agrees with that
   of OpenMC to 0.7%.
@@ -40,7 +44,8 @@ The main findings are:
   calculation with the same group data agrees with continuous-energy OpenMC to 0.2% in
   the region totals and in the mean of the dose map.
 - The uncollided flux took 4 minutes on one MPI rank with 32 threads. The collided flux
-  took 62 GMRES iterations and 83 minutes on 24 MPI ranks, with 227 GB of memory.
+  took 88 GMRES iterations and 48 minutes on 960 MPI ranks, with 940 GB of memory. With
+  576 directions, it took 83 minutes on 24 MPI ranks of one node, with 227 GB.
 
 ## Contents
 
@@ -266,7 +271,7 @@ are about 0.3% smaller than those of the analytic buildings.
 | Energy | 25 groups, 10 to 670 keV, in 5 groupsets of 5 groups |
 | Scattering | P3, 16 flux moments |
 | Uncollided flux | Ray tracing to every cell of the mesh |
-| Angular quadrature, collided flux | SLDFEsq level 1, refined once within 10° of the horizon, 576 directions |
+| Angular quadrature, collided flux | SLDFEsq level 2, refined twice within 10° of the horizon, 3,168 directions |
 | Sweep | AAH |
 | Iteration | GMRES restarted every 5 iterations, one pass over the groupsets |
 | Convergence | `1e-7` residual of each groupset |
@@ -275,9 +280,10 @@ There is no upscattering, so one pass over the groupsets, from the highest energ
 lowest, converges the scattering between groups. The SLDFEsq quadrature does not integrate
 every product of the P3 spherical harmonics exactly, and OpenSn warns about it. The
 refinement near the horizon also changes the distribution of the directions in polar angle,
-so the quadrature integrates the axisymmetric P2 harmonic to -7e-4 instead of zero. The P2
-moment of the scattering source therefore adds a small net source, and the particle balance
-closes to 2e-6 of the source instead of 5e-8. The comparison with OpenMC includes the effect
+so the quadrature integrates the axisymmetric P2 harmonic to -8.5e-5 instead of zero (-7e-4
+with 576 directions). The P2 moment of the scattering source therefore adds a small net
+source, and the particle balance closes to 3e-7 of the source (2e-6 with 576 directions)
+instead of 5e-8. The comparison with OpenMC includes the effect
 of these approximations.
 
 ### Sensitivity to the discretization
@@ -302,7 +308,8 @@ give the mean difference and the median absolute difference.*
 | No wall layers | 116,181 | P3 | SLDFEsq 1, refined near the horizon | 576 | -1.0%, 1.9% | -7.3%, 7.7% | -4.2% | +1.6% to +8.0% | -2.9% |
 | No wall layers | 116,181 | P3 | SLDFEsq 2 | 864 | -0.2%, 1.7% | -6.9%, 7.0% | -4.3% | +1.6% to +7.2% | -3.0% |
 | Wall layers | 315,070 | P3 | SLDFEsq 1 | 384 | -0.1%, 3.0% | -1.2%, 3.9% | -0.5% | -3.2% to +2.1% | -0.3% |
-| **Wall layers** | **315,070** | **P3** | **SLDFEsq 1, refined near the horizon** | **576** | **+0.2%, 1.7%** | **-0.4%, 3.2%** | **-0.5%** | **-2.9% to +2.6%** | **-0.4%** |
+| Wall layers | 315,070 | P3 | SLDFEsq 1, refined near the horizon | 576 | +0.2%, 1.7% | -0.4%, 3.2% | -0.5% | -2.9% to +2.6% | -0.4% |
+| **Wall layers** | **315,070** | **P3** | **SLDFEsq 2, refined twice near the horizon** | **3,168** | **+0.3%, 1.0%** | **+0.3%, 2.4%** | **-0.5%** | **-0.8% to +2.4%** | **-0.4%** |
 
 The table separates two errors:
 
@@ -322,39 +329,45 @@ The table separates two errors:
   by 3 points. The wall layers reduce it by 6 to 7 points with either quadrature, and the
   error of the collided flux in the air from -4.3% to -0.5%.
 
-The production calculation therefore combines the wall layers with SLDFEsq level 1, refined
-once near the horizon. With the wall layers, the refinement lowers the median difference
-from 3.0% to 1.7% in the boxes that see the source and from 3.9% to 3.2% in the shadows,
-and the mean difference in the shadows from -1.2% to -0.4%, with 1.5 times the directions.
+With the wall layers, refining SLDFEsq level 1 once near the horizon lowers the median
+difference from 3.0% to 1.7% in the boxes that see the source and from 3.9% to 3.2% in the
+shadows, with 1.5 times the directions. The source stands in a north-south street, along the
+boundary of two octants of the quadrature, and the 576 directions have their largest
+azimuthal gaps, 9.6° to 12.6°, near the horizon along that street, where the ray effects
+of the collided flux were strongest. The production calculation therefore uses SLDFEsq level
+2, refined twice near the horizon: 3,168 directions, whose largest azimuthal gaps near the
+horizon are 0.7° to 2.6°. It lowers the median difference to 1.0% in the boxes that see
+the source and to 2.4% in the shadows, and narrows the spread of the collided flux in the
+buildings from -2.9% to +2.6% to -0.8% to +2.4%.
 
 ## Results
 
-The particle balance of the calculation closes to 2e-6 of the source (see Table 2). 0.3192
-gamma rays leak per source gamma ray: 0.0752 uncollided and 0.2440 after one or more
-collisions. The other 0.6808 are absorbed, by photoelectric absorption or by scattering
+The particle balance of the calculation closes to 3e-7 of the source (see Table 2). 0.3190
+gamma rays leak per source gamma ray: 0.0752 uncollided and 0.2438 after one or more
+collisions. The other 0.6810 are absorbed, by photoelectric absorption or by scattering
 below the 10 keV cutoff.
 
 *Table 4. Region-integrated scalar flux [cm] and dose [pSv cm³] per source gamma ray.*
 
 | Region | Flux | Collided flux | Dose | Uncollided share of the dose |
 | --- | ---: | ---: | ---: | ---: |
-| Air | 9.6822e+03 | 6.5133e+03 | 1.7036e+04 | 59% |
-| Streets (asphalt) | 9.5727e+00 | 7.3746e+00 | 1.5974e+01 | 44% |
-| Plaza and lots (concrete) | 1.4373e+00 | 1.2787e+00 | 1.6811e+00 | 30% |
-| Parks (soil) | 1.7339e-01 | 1.6875e-01 | 1.6768e-01 | 9% |
-| Building R45 | 1.2128e+00 | 1.0754e+00 | 1.6221e+00 | 27% |
-| Building C70 | 2.9355e+00 | 2.6487e+00 | 3.7177e+00 | 24% |
-| Building T25 | 7.4902e-01 | 6.8423e-01 | 8.7869e-01 | 23% |
-| Building S80 | 1.0848e+00 | 1.0012e+00 | 1.2840e+00 | 21% |
-| Building L35 | 5.7557e-01 | 5.7554e-01 | 4.5021e-01 | 0.03% |
-| Building E30 | 5.7711e+00 | 5.0939e+00 | 7.4728e+00 | 29% |
-| Building W50 | 2.1750e+00 | 1.9880e+00 | 2.6046e+00 | 23% |
-| Building S60 | 6.0567e-01 | 6.0567e-01 | 4.0656e-01 | 0% |
-| Building R20 | 3.3206e+01 | 2.7805e+01 | 4.7434e+01 | 36% |
-| Building H40 | 4.4549e+00 | 3.9882e+00 | 5.6279e+00 | 26% |
-| Building C30 | 4.0319e-01 | 4.0188e-01 | 3.5676e-01 | 1% |
-| Building W25 | 4.0671e+00 | 3.5156e+00 | 5.6065e+00 | 31% |
-| Building L55 | 9.6271e+00 | 8.5349e+00 | 1.2217e+01 | 28% |
+| Air | 9.6831e+03 | 6.5142e+03 | 1.7036e+04 | 59% |
+| Streets (asphalt) | 9.5727e+00 | 7.3745e+00 | 1.5974e+01 | 44% |
+| Plaza and lots (concrete) | 1.4377e+00 | 1.2791e+00 | 1.6813e+00 | 30% |
+| Parks (soil) | 1.7355e-01 | 1.6892e-01 | 1.6778e-01 | 9% |
+| Building R45 | 1.2137e+00 | 1.0763e+00 | 1.6236e+00 | 27% |
+| Building C70 | 2.9678e+00 | 2.6810e+00 | 3.7526e+00 | 24% |
+| Building T25 | 7.7225e-01 | 7.0746e-01 | 9.0341e-01 | 23% |
+| Building S80 | 1.0861e+00 | 1.0024e+00 | 1.2850e+00 | 21% |
+| Building L35 | 5.7470e-01 | 5.7466e-01 | 4.4914e-01 | 0.03% |
+| Building E30 | 5.7398e+00 | 5.0626e+00 | 7.4421e+00 | 29% |
+| Building W50 | 2.1992e+00 | 2.0122e+00 | 2.6305e+00 | 23% |
+| Building S60 | 6.0623e-01 | 6.0623e-01 | 4.0744e-01 | 0% |
+| Building R20 | 3.3218e+01 | 2.7817e+01 | 4.7442e+01 | 36% |
+| Building H40 | 4.4476e+00 | 3.9808e+00 | 5.6229e+00 | 26% |
+| Building C30 | 4.0580e-01 | 4.0449e-01 | 3.5922e-01 | 1% |
+| Building W25 | 4.0167e+00 | 3.4652e+00 | 5.5560e+00 | 31% |
+| Building L55 | 9.6702e+00 | 8.5780e+00 | 1.2267e+01 | 28% |
 
 The buildings are named by their type in [city.toml](city.toml) and their height in meters,
 as in Figure 1. Buildings L35 and S60
@@ -369,14 +382,27 @@ only after scattering.
 *Figure 3. Effective dose rate (AP) between 0.5 and 1.5 m above the ground, on 4 m boxes,
 for a 1 Ci source, from OpenSn and OpenMC, and their relative difference. Boxes inside the
 buildings are blank. The difference is shown for the boxes compared in Tables 7 and 8: in the
-open, at least 10 m from the source, with an OpenMC standard error below 5%. The streaks
-along the directions of the quadrature are the ray effects of the collided flux.*
+open, at least 10 m from the source, with an OpenMC standard error below 5%. The faint
+streaks along the directions of the quadrature are the remaining ray effects of the collided
+flux.*
 
 For a 1 Ci source, the dose rate is 936 µSv/h in the 4 m box around the source, and its
-median over the map is 0.09 µSv/h. In the shadows of the buildings, the dose rate is
+median over the map is 0.10 µSv/h. In the shadows of the buildings, the dose rate is
 typically 5% to 8% of that in the open at the same distance from the source, and as low as
 0.4%. The shadows of the buildings next to the source reach across the streets behind
 them.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/dose-3d-dark.png">
+  <img alt="Effective dose rate on the buildings and the ground" src="assets/dose-3d-light.png">
+</picture>
+
+*Figure 4. Effective dose rate (AP) on the surfaces of the buildings and the ground, for a
+1 Ci source, on a logarithmic scale from 10⁻³ to 10² µSv/h. Each cell is shown with the
+mean of its nodal values. The air is not shown.*
+
+The walls that face the source are bright, and the walls and the ground in the shadows of
+the buildings are dark: Figure 4 shows the shadows of Figure 3 in three dimensions.
 
 ## Comparison with continuous-energy Monte Carlo
 
@@ -426,28 +452,28 @@ incidence. Buildings L35 and S60 receive almost no uncollided flux and are left 
 
 | Region | Collided flux, OpenSn | Collided flux, OpenMC | Difference | Dose, OpenSn | Dose, OpenMC | Difference |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Air | 6.5133e+03 | 6.5444e+03 ± 0.02% | -0.48% | 1.7036e+04 | 1.7058e+04 ± 0.01% | -0.13% |
-| Streets (asphalt) | 7.3746e+00 | 7.3882e+00 ± 0.01% | -0.18% | 1.5974e+01 | 1.6000e+01 ± 0.01% | -0.16% |
-| Plaza and lots (concrete) | 1.2787e+00 | 1.2605e+00 ± 0.05% | +1.45% | 1.6811e+00 | 1.6598e+00 ± 0.05% | +1.28% |
-| Parks (soil) | 1.6875e-01 | 1.6701e-01 ± 0.11% | +1.04% | 1.6768e-01 | 1.6417e-01 ± 0.13% | +2.14% |
-| Building R45 | 1.0754e+00 | 1.0782e+00 ± 0.15% | -0.26% | 1.6221e+00 | 1.6307e+00 ± 0.16% | -0.53% |
-| Building C70 | 2.6487e+00 | 2.6721e+00 ± 0.10% | -0.88% | 3.7177e+00 | 3.7450e+00 ± 0.13% | -0.73% |
-| Building T25 | 6.8423e-01 | 7.0430e-01 ± 0.18% | -2.85% | 8.7869e-01 | 9.0350e-01 ± 0.24% | -2.75% |
-| Building S80 | 1.0012e+00 | 1.0104e+00 ± 0.18% | -0.91% | 1.2840e+00 | 1.2959e+00 ± 0.20% | -0.92% |
-| Building L35 | 5.7554e-01 | 5.6095e-01 ± 0.16% | +2.60% | 4.5021e-01 | 4.3353e-01 ± 0.22% | +3.85% |
-| Building E30 | 5.0939e+00 | 5.0368e+00 ± 0.08% | +1.13% | 7.4728e+00 | 7.4252e+00 ± 0.08% | +0.64% |
-| Building W50 | 1.9880e+00 | 1.9898e+00 ± 0.09% | -0.09% | 2.6046e+00 | 2.6058e+00 ± 0.12% | -0.05% |
-| Building S60 | 6.0567e-01 | 5.9991e-01 ± 0.19% | +0.96% | 4.0656e-01 | 3.9881e-01 ± 0.23% | +1.94% |
-| Building R20 | 2.7805e+01 | 2.7801e+01 ± 0.02% | +0.01% | 4.7434e+01 | 4.7457e+01 ± 0.03% | -0.05% |
-| Building H40 | 3.9882e+00 | 3.9886e+00 ± 0.08% | -0.01% | 5.6279e+00 | 5.6350e+00 ± 0.10% | -0.13% |
-| Building C30 | 4.0188e-01 | 3.9960e-01 ± 0.21% | +0.57% | 3.5676e-01 | 3.5264e-01 ± 0.24% | +1.17% |
-| Building W25 | 3.5156e+00 | 3.4632e+00 ± 0.09% | +1.51% | 5.6065e+00 | 5.5631e+00 ± 0.09% | +0.78% |
-| Building L55 | 8.5349e+00 | 8.5912e+00 ± 0.06% | -0.66% | 1.2217e+01 | 1.2287e+01 ± 0.07% | -0.57% |
-| Collided leakage | 2.4398e-01 | 2.4516e-01 ± 0.02% | -0.48% | - | - | - |
+| Air | 6.5142e+03 | 6.5444e+03 ± 0.02% | -0.46% | 1.7036e+04 | 1.7058e+04 ± 0.01% | -0.13% |
+| Streets (asphalt) | 7.3745e+00 | 7.3882e+00 ± 0.01% | -0.18% | 1.5974e+01 | 1.6000e+01 ± 0.01% | -0.16% |
+| Plaza and lots (concrete) | 1.2791e+00 | 1.2605e+00 ± 0.05% | +1.48% | 1.6813e+00 | 1.6598e+00 ± 0.05% | +1.29% |
+| Parks (soil) | 1.6892e-01 | 1.6701e-01 ± 0.11% | +1.14% | 1.6778e-01 | 1.6417e-01 ± 0.13% | +2.20% |
+| Building R45 | 1.0763e+00 | 1.0782e+00 ± 0.15% | -0.17% | 1.6236e+00 | 1.6307e+00 ± 0.16% | -0.44% |
+| Building C70 | 2.6810e+00 | 2.6721e+00 ± 0.10% | +0.33% | 3.7526e+00 | 3.7450e+00 ± 0.13% | +0.20% |
+| Building T25 | 7.0746e-01 | 7.0430e-01 ± 0.18% | +0.45% | 9.0341e-01 | 9.0350e-01 ± 0.24% | -0.01% |
+| Building S80 | 1.0024e+00 | 1.0104e+00 ± 0.18% | -0.79% | 1.2850e+00 | 1.2959e+00 ± 0.20% | -0.84% |
+| Building L35 | 5.7466e-01 | 5.6095e-01 ± 0.16% | +2.44% | 4.4914e-01 | 4.3353e-01 ± 0.22% | +3.60% |
+| Building E30 | 5.0626e+00 | 5.0368e+00 ± 0.08% | +0.51% | 7.4421e+00 | 7.4252e+00 ± 0.08% | +0.23% |
+| Building W50 | 2.0122e+00 | 1.9898e+00 ± 0.09% | +1.13% | 2.6305e+00 | 2.6058e+00 ± 0.12% | +0.95% |
+| Building S60 | 6.0623e-01 | 5.9991e-01 ± 0.19% | +1.05% | 4.0744e-01 | 3.9881e-01 ± 0.23% | +2.16% |
+| Building R20 | 2.7817e+01 | 2.7801e+01 ± 0.02% | +0.06% | 4.7442e+01 | 4.7457e+01 ± 0.03% | -0.03% |
+| Building H40 | 3.9808e+00 | 3.9886e+00 ± 0.08% | -0.19% | 5.6229e+00 | 5.6350e+00 ± 0.10% | -0.22% |
+| Building C30 | 4.0449e-01 | 3.9960e-01 ± 0.21% | +1.22% | 3.5922e-01 | 3.5264e-01 ± 0.24% | +1.87% |
+| Building W25 | 3.4652e+00 | 3.4632e+00 ± 0.09% | +0.06% | 5.5560e+00 | 5.5631e+00 ± 0.09% | -0.13% |
+| Building L55 | 8.5780e+00 | 8.5912e+00 ± 0.06% | -0.15% | 1.2267e+01 | 1.2287e+01 ± 0.07% | -0.16% |
+| Collided leakage | 2.4376e-01 | 2.4516e-01 ± 0.02% | -0.57% | - | - | - |
 
 The dose in the air and the streets, where people are, agrees with OpenMC to 0.16%. The
-collided flux agrees to 0.5% in the air and the streets and to 2.9% or better in every
-building. The total leakage, 0.31922 per source gamma ray, is 0.37% lower than that of
+collided flux agrees to 0.5% in the air and the streets and to 2.4% or better in every
+building. The total leakage, 0.31900 per source gamma ray, is 0.44% lower than that of
 OpenMC, 0.32041 ± 0.01%.
 
 Tables 7 and 8 compare the dose map of Figure 3 box by box. The difference in a box is
@@ -463,15 +489,16 @@ estimate of the error of OpenSn alone.
 
 | Boxes | Number | Mean | Median absolute | RMS | RMS OpenMC SE | RMS without the OpenMC error |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Open | 1,768 | -0.02% ± 0.11% | 2.0% | 4.8% | 2.1% | 4.3% |
-| Open, seeing the source | 1,239 | +0.17% ± 0.10% | 1.7% | 3.4% | 1.6% | 3.0% |
-| Open, in a building shadow | 472 | -0.37% ± 0.33% | 3.2% | 7.2% | 3.1% | 6.4% |
+| Open | 1,768 | +0.32% ± 0.10% | 1.2% | 4.1% | 2.1% | 3.5% |
+| Open, seeing the source | 1,239 | +0.32% ± 0.06% | 1.0% | 2.2% | 1.5% | 1.6% |
+| Open, in a building shadow | 472 | +0.30% ± 0.31% | 2.4% | 6.8% | 3.1% | 6.0% |
 
-The mean differences are within two standard errors of zero, so OpenSn is not
-biased: averages over many boxes agree with OpenMC to a fraction of a percent, as do the
-dose totals in the air and the streets in Table 6. Single boxes differ by a few percent. These differences
-are the ray effects visible in Figure 3: streaks in which neighboring boxes are alternately
-high and low.
+Averages over many boxes agree with OpenMC to a fraction of a percent, as do the dose
+totals in the air and the streets in Table 6. In the boxes that see the source, OpenSn is
+0.32% high on average, five standard errors from zero, so a small bias remains there. In
+the shadows, the mean is within one standard error of zero. In the boxes that see the source,
+single boxes differ by about 1%, and the RMS difference is 1.6% beyond the OpenMC error. In
+the shadows, it is 6.0%.
 
 Boxes that a building wall crosses are left out. OpenMC averages the dose over the whole box,
 but OpenSn evaluates it at the 2 × 2 × 2 Gauss points of the box, which do not resolve the
@@ -484,15 +511,17 @@ comparison.*
 
 | Distance | Seeing the source, mean | Median absolute | OpenMC SE | Building shadow, mean | Median absolute | OpenMC SE |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 10 to 20 m | +0.5% | 1.2% | 0.2% | - | - | - |
-| 20 to 40 m | +1.1% | 1.2% | 0.5% | -2.7% | 1.2% | 1.3% |
-| 40 to 70 m | +1.1% | 1.7% | 0.9% | +1.6% | 2.4% | 2.0% |
-| 70 to 100 m | -0.5% | 2.0% | 1.5% | -1.3% | 3.3% | 2.9% |
-| 100 to 150 m | -0.8% | 2.2% | 2.2% | -0.6% | 4.2% | 4.3% |
+| 10 to 20 m | +0.5% | 1.0% | 0.2% | - | - | - |
+| 20 to 40 m | +0.5% | 0.8% | 0.5% | -2.7% | 1.0% | 1.3% |
+| 40 to 70 m | +0.5% | 0.8% | 0.9% | +1.7% | 1.9% | 2.0% |
+| 70 to 100 m | +0.4% | 1.0% | 1.5% | -0.5% | 2.7% | 2.9% |
+| 100 to 150 m | -0.1% | 1.4% | 2.2% | +0.5% | 3.6% | 4.3% |
 
-The differences grow with the distance from the source, and so does the OpenMC error. Beyond
-70 m, the median difference is about the size of the OpenMC standard error. No box in a
-building shadow lies within 20 m of the source.
+In the boxes that see the source, the median difference is about 1% at every distance, and
+beyond 40 m it is smaller than the OpenMC standard error. In the shadows, the differences grow
+with the distance from the source, as the OpenMC error does, and beyond 40 m the median
+difference is about the size of the OpenMC standard error. No box in a building shadow lies
+within 20 m of the source.
 
 ## Discussion
 
@@ -500,20 +529,23 @@ building shadow lies within 20 m of the source.
 
 The remaining differences have four sources:
 
-- **Ray effects of the collided flux.** The difference map of Figure 3 has streaks of
-  alternating sign that radiate from the source. They are ray effects: the first
+- **Ray effects of the collided flux.** The difference map of Figure 3 has faint streaks
+  of alternating sign that radiate from the source. They are ray effects: the first
   collisions are concentrated near the source, so the collided flux far from it arrives
-  from a narrow range of directions, which 576 directions resolve only approximately. The
-  mean of the streaks is near zero. With the OpenMC statistical error, they make up the 2%
-  to 3% median difference on the map. More directions reduce them (Table 3).
+  from a narrow range of directions. With 576 directions, they were the largest error on
+  the map. With 3,168, the 95th percentile of the difference of the collided dose in the
+  boxes that see the source fell from 21% to 11%, its RMS from 10.3% to 6.7%, and the
+  number of boxes that differ by 10% or more from 51 to 37 of 1,768.
 - **The far field.** Beyond 100 m from the source, the dose in the boxes that see the source
-  is 0.8% low, within the 2.2% OpenMC standard error. Without the refinement near the
-  horizon, it was 3.1% low there.
-- **The ground.** The collided flux is 1.5% high in the concrete lots and 1.0% high in the
+  is 0.1% low, within the 2.2% OpenMC standard error. It was 0.8% low with 576 directions
+  and 3.1% low without the refinement near the horizon.
+- **The ground.** The collided flux is 1.5% high in the concrete lots and 1.1% high in the
   parks. Both rose by 2.5 to 3.7 points with either quadrature when the wall layers were
-  added, which changed the gamma rays scattered from the walls to the ground. They depend
-  on the mesh of the walls and may not be converged with it.
-- **The buildings.** The collided flux in the buildings is within 2.9% of OpenMC. The
+  added, which changed the gamma rays scattered from the walls to the ground, and did not
+  change with 3,168 directions. They depend on the mesh of the walls and may not be
+  converged with it. The same mesh most likely causes the 6% RMS difference in the
+  shadows, which more directions reduced only slightly.
+- **The buildings.** The collided flux in the buildings is within 2.4% of OpenMC. The
   buildings are tens of mean free paths thick, and their interiors are meshed coarsely, so
   their region totals depend on the flux deep inside them, which matters little for the
   dose outside.
@@ -535,32 +567,44 @@ angular distributions zero, which raises the dose in the shadows by about 10%.
 | Stage | Hardware | Iterations | Wall time | Peak memory |
 | --- | --- | ---: | ---: | ---: |
 | OpenSn, uncollided flux | 1 MPI rank, 32 threads | - | 4.1 min | 10 GB |
-| OpenSn, collided flux | 24 MPI ranks | 62 | 83 min | 227 GB, 9.5 GB per rank |
+| OpenSn, collided flux, 3,168 directions | 960 MPI ranks on 10 nodes | 88 | 48 min | 940 GB, 1.6 GB per rank |
+| OpenSn, collided flux, 576 directions | 24 MPI ranks on one node | 62 | 83 min | 227 GB, 9.5 GB per rank |
 | OpenMC, 10⁸ photons | 24 threads | - | 25 min | - |
 
-The first stage spends 2 minutes ray tracing and 1 minute computing the cell matrices. The
-second stage spends 79 seconds on each GMRES iteration, a sweep of 5 groups over 576
-directions. The five groupsets took 11, 12, 14, 14, and 11 iterations. GMRES restarts
-every 5 iterations, which costs one extra sweep per restart but keeps the number of Krylov
-vectors, each of which holds the flux moments of the groupset, small. Each groupset keeps
-about 18 GB of solver data until the end of the calculation, so the memory grows during
-the solve. On a node with 250 GB, 32 ranks run out of memory in the last groupset and 24
-ranks fit.
+The first stage spends 2 minutes ray tracing and 1 minute computing the cell matrices. With
+3,168 directions on 960 ranks, the second stage spends 2 minutes on its setup and about 30
+seconds on each GMRES iteration, a sweep of 5 groups over 3,168 directions. The five
+groupsets took 16, 17, 21, 20, and 14 iterations. GMRES restarts every 5 iterations, which
+costs one extra sweep per restart but keeps the number of Krylov vectors, each of which
+holds the flux moments of the groupset, small. With 576 directions on 24 ranks, each
+iteration took 79 seconds, and the five groupsets took 11, 12, 14, 14, and 11 iterations.
+
+The 576-direction calculation used OpenSn main, in which each groupset kept about 18 GB of
+solver data until the end of the calculation, so 32 ranks ran out of memory on a node with
+250 GB. The 3,168-direction calculation used two further changes, which free the solver data
+of each groupset after its solve and read the sweep data of each cell contiguously (pull
+requests [#1263](https://github.com/Open-Sn/opensn/pull/1263) and
+[#1264](https://github.com/Open-Sn/opensn/pull/1264)), together with the compact sweep data
+of [#1260](https://github.com/Open-Sn/opensn/pull/1260), now on main. With them, the
+3,168-direction calculation needs about 200 GB on 32 ranks of one node, but its first
+iteration there took 4.6 minutes, so it would run for about 7 hours.
 
 ## Conclusions
 
 OpenSn's uncollided-flux method and a discrete-ordinates solution of the collided flux
 reproduce continuous-energy Monte Carlo for a gamma-ray point source in a city. The dose in
-the air agrees to 0.13%, the leakage to 0.37%, and the dose map 1 m above the ground has a
-mean difference of 0.17% in the open boxes that see the source and 0.37% in the shadows of
-the buildings, with median differences of 1.7% and 3.2%.
+the air agrees to 0.13%, the leakage to 0.44%, and the dose map 1 m above the ground has a
+mean difference of +0.32% in the open boxes that see the source and +0.30% in the shadows of
+the buildings, with median differences of 1.0% and 2.4%.
 
 Three features of the discretization were necessary, each identified by a separate study:
 layers a few centimeters thick at the ground surface, layers thinner than a mean free path
 at the building walls, and an angular quadrature with directions near the horizon. Without
-any one of them, the scattered flux in the air or the dose map was 6% to 35% too low. The
-remaining differences are ray effects of the collided flux, of alternating sign, which more
-directions reduce.
+any one of them, the scattered flux in the air or the dose map was 6% to 35% too low. With
+3,168 directions, the ray effects of the collided flux are small, and the dose in the boxes
+that see the source agrees with OpenMC to 1.6% RMS beyond its statistical error. The
+remaining differences are largest in the shadows of the buildings, where the mesh at the
+walls most likely limits the accuracy.
 
 ## Appendix: reproducing the results
 
@@ -582,6 +626,7 @@ directions reduce.
 | `uncollided_reference.json` | Results of `uncollided_reference.py` |
 | [compare_openmc.py](compare_openmc.py) | Comparison of the OpenSn results with OpenMC and the semi-analytic uncollided flux |
 | [make_figures.py](make_figures.py) | Figures of this report |
+| [render_3d.py](render_3d.py) | Three-dimensional view of Figure 4 |
 | [generate_xs.py](generate_xs.py) | Script that generates the cross sections with OpenMC |
 | [generate_mesh.py](generate_mesh.py) | Script that generates the mesh with Gmsh |
 | [provenance/materials_25g_p7.json](provenance/materials_25g_p7.json) | Record of every input and output of the cross-section generation |
@@ -589,9 +634,10 @@ directions reduce.
 
 ### Running OpenSn
 
-Run it with OpenSn built from `main` with pull request
-[#1247](https://github.com/Open-Sn/opensn/pull/1247), which reads the Gmsh prisms of the
-mesh. The calculation needs about 230 GB of memory, so the automated example tests run a
+Run it with OpenSn built from `main`. The 3,168-direction calculation of this report also
+used pull requests [#1263](https://github.com/Open-Sn/opensn/pull/1263) and
+[#1264](https://github.com/Open-Sn/opensn/pull/1264), which reduce its memory and run time.
+It needs about 940 GB of memory on 960 ranks, so the automated example tests run a
 low-resolution version of it instead.
 
 Run the first stage on one MPI rank, with threads, and the second stage on many ranks:
@@ -600,7 +646,7 @@ Run the first stage on one MPI rank, with threads, and the second stage on many 
 gunzip -k urban_source.msh.gz
 OPENSN_NUM_THREADS=32 mpirun -n 1 opensn -i urban_source.py
 export OPENSN_NUM_THREADS=1
-mpirun -n 24 opensn -i urban_source.py
+mpirun -n 960 opensn -i urban_source.py
 ```
 
 The first stage writes `urban_source_uncollided.h5` and `urban_source_uncollided.json`, and
@@ -612,9 +658,12 @@ delete `urban_source_uncollided.h5`.
 
 The settings at the top of [urban_source.py](urban_source.py) can be changed with the `-p`
 option of the console, for example `-p "quadrature_type='glc'"` for the GLC calculations of
-Table 3, or `-p "horizon_refinements=0"` for the 384-direction quadrature, which needs about
-200 GB on 32 ranks. Lowering `gmres_restart_interval` saves memory at the cost of extra
-iterations.
+Table 3, or `-p "sldfesq_level=1" -p "horizon_refinements=1"` for the 576-direction
+calculation, which runs on one node with 24 ranks and 230 GB. Lowering
+`gmres_restart_interval` saves memory at the cost of extra iterations. On networks that run
+out of rendezvous resources with many ranks, such as Slingshot,
+`-p "max_mpi_outstanding_sends=448"` limits the sweep messages a rank keeps posted. It does
+not change the solution.
 
 ### Comparing with the references
 
@@ -623,11 +672,14 @@ python3 compare_openmc.py urban_source_results.json uncollided_reference.json \
     openmc_reference_results.json
 python3 make_figures.py --opensn urban_source_results.json \
     --uncollided uncollided_reference.json --openmc openmc_reference_results.json
+python3 render_3d.py --flux urban_source_flux.pvtu --opensn urban_source_results.json
 ```
 
-[compare_openmc.py](compare_openmc.py) prints Tables 5 to 7 and writes them to
-`comparison.json`. [make_figures.py](make_figures.py) writes the figures to `assets/`. Both
-need NumPy, and the figures need Matplotlib, h5py, and the OpenMC Python package.
+[compare_openmc.py](compare_openmc.py) prints Tables 5 to 8 and writes them to
+`comparison.json`. [make_figures.py](make_figures.py) writes Figures 1 to 3 to `assets/`, and
+[render_3d.py](render_3d.py) writes Figure 4. All need NumPy, the figures need Matplotlib,
+[make_figures.py](make_figures.py) also needs h5py and the OpenMC Python package, and
+[render_3d.py](render_3d.py) needs PyVista.
 
 To recompute the semi-analytic uncollided flux, set `OPENMC_CROSS_SECTIONS` to the
 `cross_sections.xml` file of the ENDF/B-VIII.0 HDF5 library of the OpenMC project and run
