@@ -658,6 +658,51 @@ class SpyderMesh:
         # update the number of vertices
         self.nverts = len(self.vertices)
 
+    def make_conforming(self, tol=1e-10):
+        """Insert every vertex that lies strictly inside an edge of only one polygon into it.
+
+        Neighboring pin cells with different radial or sector layouts can place vertices on their
+        shared edge that the neighbor does not have (a hanging node or T-junction). The edge of the
+        neighbor then matches no edge of the cell, so a transport code that connects cells by
+        shared vertices leaves a crack there. Splitting the long edge at the hanging vertices makes
+        the two cells share every edge. It adds collinear vertices only, so no area changes.
+        Polygons are closed vertex lists (the first vertex repeated at the end). Returns the number
+        of vertices inserted.
+        """
+        inserted = 0
+        while True:
+            counts = {}
+            for poly in self.polygons:
+                for a, b in zip(poly[:-1], poly[1:]):
+                    key = (min(a, b), max(a, b))
+                    counts[key] = counts.get(key, 0) + 1
+            single = [key for key, c in counts.items() if c == 1]
+            candidates = sorted({v for key in single for v in key})
+            if not candidates:
+                return inserted
+            cand_xy = self.vertices[candidates]
+            changed = False
+            for ip, poly in enumerate(self.polygons):
+                new_poly = [poly[0]]
+                for a, b in zip(poly[:-1], poly[1:]):
+                    if counts[(min(a, b), max(a, b))] == 1:
+                        p0, p1 = self.vertices[a], self.vertices[b]
+                        d = p1 - p0
+                        length2 = float(d @ d)
+                        rel = cand_xy - p0
+                        s = rel @ d / length2
+                        dist = np.abs(rel[:, 0] * d[1] - rel[:, 1] * d[0]) / np.sqrt(length2)
+                        inside = (s > tol) & (s < 1.0 - tol) & (dist < tol)
+                        for k in np.argsort(s):
+                            if inside[k] and candidates[k] not in (a, b):
+                                new_poly.append(candidates[k])
+                                inserted += 1
+                                changed = True
+                    new_poly.append(b)
+                self.polygons[ip] = new_poly
+            if not changed:
+                return inserted
+
     def export_to_obj(self, obj_name="mesh.obj"):
 
         with open(obj_name, "w") as f:
