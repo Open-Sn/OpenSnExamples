@@ -919,6 +919,11 @@ def make_mesh_object(casename, input_dir, output_dir, plot_pins=False, plot_latt
     lattice.make_vertices_unique2()
     print("elapsed time = {:.2f} s".format(time.time() - t0))
 
+    # Pins with different layouts, such as fuel and guide tubes with the 2Q spacer skin, can leave
+    # hanging vertices on their shared edges. Splitting those edges makes the mesh conforming.
+    num_inserted = lattice.make_conforming()
+    print("Hanging vertices inserted into neighboring edges:", num_inserted)
+
     print(lattice.vertices.shape)
 
     x_lim = pitch * 8.15
@@ -966,6 +971,11 @@ def make_mesh_object(casename, input_dir, output_dir, plot_pins=False, plot_latt
     t0 = time.time()
     lattice.make_vertices_unique2()
     print("elapsed time = {:.2f} s".format(time.time() - t0))
+
+    # Pins with different layouts, such as fuel and guide tubes with the 2Q spacer skin, can leave
+    # hanging vertices on their shared edges. Splitting those edges makes the mesh conforming.
+    num_inserted = lattice.make_conforming()
+    print("Hanging vertices inserted into neighboring edges:", num_inserted)
 
     print(lattice.vertices.shape)
 
